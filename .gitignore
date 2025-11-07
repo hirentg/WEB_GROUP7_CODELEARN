@@ -1,0 +1,25 @@
+# === Java / Spring Boot ===
+/backend/target/
+/backend/.classpath
+/backend/.project
+/backend/.settings/
+*.class
+*.log
+
+# === Node / React ===
+/frontend/node_modules/
+/frontend/.vite/
+/frontend/.next/
+/frontend/dist/
+/frontend/build/
+*.log
+
+# === IDE / hệ điều hành ===
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# === Môi trường / bí mật ===
+.env
+.env.local

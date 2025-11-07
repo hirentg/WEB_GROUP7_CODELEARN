@@ -1,7 +1,0 @@
-com\codelearn\controller\AuthController.class
-com\codelearn\config\CorsConfig.class
-com\codelearn\controller\CourseController.class
-com\codelearn\dto\RegisterRequest.class
-com\codelearn\dto\LoginRequest.class
-com\codelearn\CodeLearnApplication.class
-com\codelearn\model\Course.class
