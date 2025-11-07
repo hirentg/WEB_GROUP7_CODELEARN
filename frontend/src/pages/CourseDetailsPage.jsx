@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { Row, Col, Typography, Rate, Button, Card, Spin, Alert, List, Space } from 'antd'
 import { api } from '../services/api'
+
+const { Title, Paragraph, Text } = Typography
 
 export default function CourseDetailsPage() {
   const { id } = useParams()
@@ -17,49 +20,85 @@ export default function CourseDetailsPage() {
     return () => { active = false }
   }, [id])
 
-  if (loading) return <div className="container">Loading…</div>
-  if (error) return <div className="container error-text">{error}</div>
-  if (!course) return <div className="container">Not found</div>
+  const curriculum = [
+    'Introduction and setup',
+    'Core concepts and best practices',
+    'Project: build a real-world app',
+    'Deployment and next steps'
+  ]
+
+  if (loading) {
+    return (
+      <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px', textAlign: 'center' }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px' }}>
+        <Alert message={error} type="error" />
+      </div>
+    )
+  }
+
+  if (!course) {
+    return (
+      <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px' }}>
+        <Alert message="Course not found" type="warning" />
+      </div>
+    )
+  }
 
   return (
-    <div className="container">
-      <div className="course-details">
-        <div className="cd-left">
-          <h1>{course.title}</h1>
-          <div className="course-author">By {course.instructor}</div>
-          <div className="course-rating-row">
-            <span className="rating-value">{course.rating?.toFixed ? course.rating.toFixed(1) : course.rating}</span>
-            <span className="stars" aria-hidden>★★★★★</span>
-            <span className="rating-count">({course.numRatings?.toLocaleString?.() || course.numRatings})</span>
-          </div>
-          <p className="muted">Duration: {course.duration} • {course.lessons} lessons</p>
-        </div>
-        <div className="cd-right">
-          <div className="video-player">
-            <video controls poster={course.thumbnailUrl} width="100%">
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 20px' }}>
+      <Row gutter={[24, 24]}>
+        <Col xs={24} lg={14}>
+          <Title level={1}>{course.title}</Title>
+          <Paragraph>By {course.instructor}</Paragraph>
+          <Space>
+            <Text strong style={{ color: '#b4690e' }}>
+              {course.rating?.toFixed ? course.rating.toFixed(1) : course.rating}
+            </Text>
+            <Rate disabled defaultValue={course.rating} />
+            <Text type="secondary">
+              ({course.numRatings?.toLocaleString?.() || course.numRatings})
+            </Text>
+          </Space>
+          <Paragraph type="secondary">Duration: {course.duration} • {course.lessons} lessons</Paragraph>
+        </Col>
+        <Col xs={24} lg={10}>
+          <Card>
+            <div style={{ 
+              width: '100%', 
+              height: '200px', 
+              background: '#000', 
+              borderRadius: '8px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff'
+            }}>
+              <Text style={{ color: '#fff' }}>Video Player Placeholder</Text>
+            </div>
+            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+              <Title level={3} style={{ margin: 0 }}>{course.price || 'Free'}</Title>
+              <Button type="primary" size="large" block>Buy now</Button>
+            </Space>
+          </Card>
+        </Col>
+      </Row>
 
-
-                 {/* video link here*/} */
-                 
-              {/*<source src="https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" /> */}
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          <div className="price-and-cta">
-            <div className="course-price big">{course.price || 'Free'}</div>
-            <button>Buy now</button>
-          </div>
-        </div>
+      <div style={{ marginTop: '48px' }}>
+        <Title level={2}>Course content</Title>
+        <List
+          bordered
+          dataSource={curriculum}
+          renderItem={(item) => <List.Item>{item}</List.Item>}
+        />
       </div>
-      <section>
-        <h2 className="section-title">Course content</h2>
-        <ul className="curriculum">
-          <li>Introduction and setup</li>
-          <li>Core concepts and best practices</li>
-          <li>Project: build a real-world app</li>
-          <li>Deployment and next steps</li>
-        </ul>
-      </section>
     </div>
   )
 }

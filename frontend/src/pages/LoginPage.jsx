@@ -1,46 +1,66 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Form, Input, Button, Card, Typography, message } from 'antd'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+
+const { Title } = Typography
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function onSubmit(e) {
-    e.preventDefault()
+  async function onFinish(values) {
     setLoading(true)
-    setError('')
     try {
-      const res = await api.post('/auth/login', { email, password })
-      login({ email, name: res?.name || email.split('@')[0] })
+      const res = await api.post('/auth/login', values)
+      login({ email: values.email, name: res?.name || values.email.split('@')[0] })
+      message.success('Login successful!')
       navigate('/')
     } catch (e) {
-      setError('Invalid credentials')
+      message.error('Invalid credentials')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="container narrow">
-      <h2>Login</h2>
-      <form className="form" onSubmit={onSubmit}>
-        <label>
-          <span>Email</span>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </label>
-        <label>
-          <span>Password</span>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </label>
-        {error && <div className="error-text">{error}</div>}
-        <button type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Login'}</button>
-      </form>
+    <div style={{ maxWidth: '500px', margin: '40px auto', padding: '0 20px' }}>
+      <Card>
+        <Title level={2}>Login</Title>
+        <Form
+          name="login"
+          onFinish={onFinish}
+          layout="vertical"
+          autoComplete="off"
+        >
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[
+              { required: true, message: 'Please input your email!' },
+              { type: 'email', message: 'Please enter a valid email!' }
+            ]}
+          >
+            <Input size="large" />
+          </Form.Item>
+
+          <Form.Item
+            label="Password"
+            name="password"
+            rules={[{ required: true, message: 'Please input your password!' }]}
+          >
+            <Input.Password size="large" />
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit" size="large" block loading={loading}>
+              Login
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
     </div>
   )
 }

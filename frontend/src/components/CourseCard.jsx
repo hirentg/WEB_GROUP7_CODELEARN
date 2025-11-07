@@ -1,21 +1,48 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { Card, Rate, Typography, Space } from 'antd'
+
+const { Meta } = Card
+const { Text, Title } = Typography
 
 export default function CourseCard({ course }) {
+  const navigate = useNavigate()
+  
   return (
-    <Link to={`/course/${course.id}`} className="course-card">
-      <div className="thumb" style={{ backgroundImage: `url(${course.thumbnailUrl})` }} />
-      <div className="course-info">
-        <div className="course-title">{course.title}</div>
-        <div className="course-author">{course.instructor}</div>
-        <div className="course-rating-row">
-          <span className="rating-value">{course.rating?.toFixed ? course.rating.toFixed(1) : course.rating}</span>
-          <span className="stars" aria-hidden>★★★★★</span>
-          <span className="rating-count">({course.numRatings?.toLocaleString?.() || course.numRatings})</span>
-        </div>
-        <div className="course-meta"><span>{course.duration}</span></div>
-        <div className="course-price">{course.price || 'Free'}</div>
-      </div>
-    </Link>
+    <Card
+      hoverable
+      style={{ width: '100%' }}
+      cover={
+        <div 
+          style={{ 
+            height: '140px', 
+            backgroundImage: `url(${course.thumbnailUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }} 
+        />
+      }
+      onClick={() => navigate(`/course/${course.id}`)}
+    >
+      <Meta
+        title={<Title level={5} style={{ margin: 0 }}>{course.title}</Title>}
+        description={
+          <Space direction="vertical" size="small" style={{ width: '100%' }}>
+            <Text type="secondary">{course.instructor}</Text>
+            <Space>
+              <Text strong style={{ color: '#b4690e' }}>
+                {course.rating?.toFixed ? course.rating.toFixed(1) : course.rating}
+              </Text>
+              <Rate disabled defaultValue={course.rating} style={{ fontSize: '12px' }} />
+              <Text type="secondary">
+                ({course.numRatings?.toLocaleString?.() || course.numRatings})
+              </Text>
+            </Space>
+            <Text type="secondary">{course.duration}</Text>
+            <Text strong style={{ fontSize: '16px' }}>{course.price || 'Free'}</Text>
+          </Space>
+        }
+      />
+    </Card>
   )
 }
 

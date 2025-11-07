@@ -1,52 +1,74 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Form, Input, Button, Card, Typography, message } from 'antd'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+
+const { Title } = Typography
 
 export default function RegisterPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function onSubmit(e) {
-    e.preventDefault()
+  async function onFinish(values) {
     setLoading(true)
-    setError('')
     try {
-      await api.post('/auth/register', { name, email, password })
-      // Auto-login for demo
-      login({ name, email })
+      await api.post('/auth/register', values)
+      login({ name: values.name, email: values.email })
+      message.success('Registration successful!')
       navigate('/')
     } catch (e) {
-      setError('Registration failed')
+      message.error('Registration failed')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="container narrow">
-      <h2>Create your account</h2>
-      <form className="form" onSubmit={onSubmit}>
-        <label>
-          <span>Name</span>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
-        </label>
-        <label>
-          <span>Email</span>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </label>
-        <label>
-          <span>Password</span>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </label>
-        {error && <div className="error-text">{error}</div>}
-        <button type="submit" disabled={loading}>{loading ? 'Creating…' : 'Register'}</button>
-      </form>
+    <div style={{ maxWidth: '500px', margin: '40px auto', padding: '0 20px' }}>
+      <Card>
+        <Title level={2}>Create your account</Title>
+        <Form
+          name="register"
+          onFinish={onFinish}
+          layout="vertical"
+          autoComplete="off"
+        >
+          <Form.Item
+            label="Name"
+            name="name"
+            rules={[{ required: true, message: 'Please input your name!' }]}
+          >
+            <Input size="large" />
+          </Form.Item>
+
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[
+              { required: true, message: 'Please input your email!' },
+              { type: 'email', message: 'Please enter a valid email!' }
+            ]}
+          >
+            <Input size="large" />
+          </Form.Item>
+
+          <Form.Item
+            label="Password"
+            name="password"
+            rules={[{ required: true, message: 'Please input your password!' }]}
+          >
+            <Input.Password size="large" />
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit" size="large" block loading={loading}>
+              Register
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
     </div>
   )
 }
