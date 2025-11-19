@@ -25,3 +25,4 @@ Thumbs.db
 # === Môi trường / bí mật ===
 .env
 .env.local
+
