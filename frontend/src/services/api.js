@@ -1,9 +1,15 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
 async function request(method, path, body) {
+  const token = localStorage.getItem('cl_token')
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
     credentials: 'include'
   })

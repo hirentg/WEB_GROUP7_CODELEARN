@@ -15,9 +15,13 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const res = await api.post('/auth/login', values)
-      login({ email: values.email, name: res?.name || values.email.split('@')[0] })
-      message.success('Login successful!')
-      navigate('/')
+      if (res && res.token) {
+        login({ email: res.email, name: res.name }, res.token)
+        message.success('Login successful!')
+        navigate('/')
+      } else {
+        message.error('Invalid response from server')
+      }
     } catch (e) {
       message.error('Invalid credentials')
     } finally {
