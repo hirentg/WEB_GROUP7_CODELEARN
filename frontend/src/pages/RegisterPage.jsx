@@ -14,12 +14,15 @@ export default function RegisterPage() {
   async function onFinish(values) {
     setLoading(true)
     try {
-      await api.post('/auth/register', values)
-      login({ name: values.name, email: values.email })
-      message.success('Registration successful!')
-      navigate('/')
+      const res = await api.post('/auth/register', values)
+      if (res && res.status === 'created') {
+        message.success('Registration successful! Please login.')
+        navigate('/login')
+      } else {
+        message.error('Registration failed')
+      }
     } catch (e) {
-      message.error('Registration failed')
+      message.error(e.message || 'Registration failed')
     } finally {
       setLoading(false)
     }

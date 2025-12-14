@@ -23,7 +23,14 @@ public class AuthController {
         // Kiểm tra xem người dùng có tồn tại trong cơ sở dữ liệu không và mật khẩu có hợp lệ không
         User user = userService.findByEmail(request.getEmail());
         if (user != null && userService.checkPassword(request.getPassword(), user.getPassword())) {
-            return ResponseEntity.ok(Map.of("status", "ok", "email", request.getEmail()));
+            // Tạo JWT token cho user đã đăng nhập thành công
+            String token = userService.generateToken(user);
+            return ResponseEntity.ok(Map.of(
+                "status", "ok", 
+                "token", token,
+                "email", user.getEmail(),
+                "name", user.getName()
+            ));
         } else {
             return ResponseEntity.status(401).body(Map.of("status", "error", "message", "Invalid credentials"));
         }
@@ -36,10 +43,9 @@ public class AuthController {
             return ResponseEntity.status(400).body(Map.of("status", "error", "message", "Email already in use"));
         }
 
-        // Lưu người dùng mới vào cơ sở dữ liệu
-        User newUser = new User(request.getName(), request.getEmail(), request.getPassword());
-        userService.save(newUser);
+        // Lưu người dùng mới vào cơ sở dữ liệu với password đã được hash
+        User newUser = userService.registerUser(request.getName(), request.getEmail(), request.getPassword());
 
-        return ResponseEntity.ok(Map.of("status", "created", "email", request.getEmail(), "name", request.getName()));
+        return ResponseEntity.ok(Map.of("status", "created", "email", newUser.getEmail(), "name", newUser.getName()));
     }
 }
