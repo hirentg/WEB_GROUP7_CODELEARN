@@ -65,7 +65,7 @@ export default function Navbar() {
         <Space size="large">
           {user ? (
             <>
-              <Link to="/my-learning" style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: 500 }}>
+              <Link to="/my-learning" style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: 500, textDecoration: 'none' }}>
                 My Learning
               </Link>
               <Badge dot offset={[-4, 4]}>
