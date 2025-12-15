@@ -157,25 +157,10 @@ export const Quizzes = () => (
   </div>
 )
 
-export const StudentInteractions = () => (
-  <div>
-    <h2>Student Interactions</h2>
-    <p>Questions, messages and discussions appear here.</p>
-  </div>
-)
+export { default as StudentInteractions } from './StudentInteractions'
 
-export const Analytics = () => (
-  <div>
-    <h2>Analytics</h2>
-    <p>Course and student analytics dashboard.</p>
-  </div>
-)
+export { default as Analytics } from './Analytics'
 
-export const ProfileSettings = () => (
-  <div>
-    <h2>Profile & Settings</h2>
-    <p>Instructor profile and account settings.</p>
-  </div>
-)
+export { default as ProfileSettings } from './ProfileSettings'
 
 export default null

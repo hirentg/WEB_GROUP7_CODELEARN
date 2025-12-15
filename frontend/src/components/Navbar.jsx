@@ -58,7 +58,7 @@ export default function Navbar() {
               border: '1px solid var(--border-color)',
               backgroundColor: 'var(--bg-subtle)'
             }}
-            bordered={false}
+            variant="borderless"
           />
         </div>
 

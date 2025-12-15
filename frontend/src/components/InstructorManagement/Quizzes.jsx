@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Table, Button, Badge, Progress, Space, Modal, message } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
-import CreateQuizModal from './CreateQuizModal'
+import CreateQuizModal from '../Form/CreateQuizModal'
 
 const mockQuizzes = [
   {
@@ -221,7 +221,6 @@ export const Quizzes = () => {
         dataSource={quizzes}
         rowKey="id"
         pagination={false}
-        bordered
         style={{ 
           background: '#fff',
           borderRadius: 12,
