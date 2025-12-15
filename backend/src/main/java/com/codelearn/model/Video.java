@@ -1,5 +1,6 @@
 package com.codelearn.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -89,6 +90,7 @@ public class Video {
         this.orderIndex = orderIndex;
     }
     
+    @JsonIgnore
     public Course getCourse() {
         return course;
     }
