@@ -1,7 +1,14 @@
 package com.codelearn.model;
 
+import jakarta.persistence.*;
+import java.util.List;
+
+@Entity
+@Table(name = "courses")
 public class Course {
+    @Id
     private String id;
+    
     private String title;
     private String instructor;
     private String duration;
@@ -10,6 +17,9 @@ public class Course {
     private double rating;
     private int numRatings;
     private String price;
+    
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Video> videos;
 
     public Course() {}
 
@@ -43,6 +53,8 @@ public class Course {
     public void setNumRatings(int numRatings) { this.numRatings = numRatings; }
     public String getPrice() { return price; }
     public void setPrice(String price) { this.price = price; }
+    public List<Video> getVideos() { return videos; }
+    public void setVideos(List<Video> videos) { this.videos = videos; }
 }
 
 

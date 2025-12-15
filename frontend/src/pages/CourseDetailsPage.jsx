@@ -1,25 +1,56 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { Row, Col, Typography, Rate, Button, Card, Spin, Alert, List, Space, Breadcrumb, Divider, Tag } from 'antd'
+import { useParams, useNavigate } from 'react-router-dom'
+import { Row, Col, Typography, Rate, Button, Card, Spin, Alert, List, Space, Breadcrumb, Divider, Tag, message } from 'antd'
 import { PlayCircleOutlined, CheckCircleOutlined, GlobalOutlined, ClockCircleOutlined, FileTextOutlined, UserOutlined, PlayCircleFilled, CheckCircleFilled } from '@ant-design/icons'
 import { api } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 const { Title, Paragraph, Text } = Typography
 
 export default function CourseDetailsPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [course, setCourse] = useState(null)
+  const [isPurchased, setIsPurchased] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [purchasing, setPurchasing] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
-    api.get(`/courses/${id}`)
-      .then((data) => { if (active) setCourse(data) })
+    Promise.all([
+      api.get(`/courses/${id}`),
+      user ? api.get(`/purchases/check/${id}`) : Promise.resolve({ purchased: false })
+    ])
+      .then(([courseData, purchaseData]) => {
+        if (active) {
+          setCourse(courseData)
+          setIsPurchased(purchaseData?.purchased || false)
+        }
+      })
       .catch(() => active && setError('Failed to load course'))
       .finally(() => active && setLoading(false))
     return () => { active = false }
-  }, [id])
+  }, [id, user])
+
+  const handlePurchase = async () => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+
+    setPurchasing(true)
+    try {
+      await api.post(`/purchases/${id}`)
+      message.success('Course purchased successfully!')
+      setIsPurchased(true)
+    } catch (err) {
+      message.error('Failed to purchase course. Please try again.')
+    } finally {
+      setPurchasing(false)
+    }
+  }
 
   const curriculum = [
     'Introduction and setup',
@@ -189,12 +220,39 @@ export default function CourseDetailsPage() {
                   </div>
 
                   <Space direction="vertical" style={{ width: '100%' }}>
-                    <Button type="primary" size="large" block style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}>
-                      Add to Cart
-                    </Button>
-                    <Button size="large" block style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}>
-                      Buy Now
-                    </Button>
+                    {isPurchased ? (
+                      <Button 
+                        type="primary" 
+                        size="large" 
+                        block 
+                        icon={<PlayCircleFilled />}
+                        style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}
+                        onClick={() => navigate(`/course/${id}/learn`)}
+                      >
+                        Continue Learning
+                      </Button>
+                    ) : (
+                      <>
+                        <Button 
+                          type="primary" 
+                          size="large" 
+                          block 
+                          style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}
+                          onClick={handlePurchase}
+                          loading={purchasing}
+                        >
+                          {user ? 'Purchase Course' : 'Login to Purchase'}
+                        </Button>
+                        <Button 
+                          size="large" 
+                          block 
+                          style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}
+                          onClick={() => navigate('/login')}
+                        >
+                          Add to Cart
+                        </Button>
+                      </>
+                    )}
                   </Space>
 
                   <div style={{ textAlign: 'center' }}>

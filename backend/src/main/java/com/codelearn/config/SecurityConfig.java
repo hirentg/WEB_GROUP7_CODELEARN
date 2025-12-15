@@ -19,7 +19,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // Enable CORS support for the security filter chain
-        http.cors();
+        http.cors(cors -> {});
 
         // Disable CSRF for API usage and use stateless session management for token-based auth
         http.csrf(csrf -> csrf.disable());
@@ -30,6 +30,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/courses/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/videos/**/stream").permitAll()
+                .requestMatchers("/api/purchases/**").authenticated()
+                .requestMatchers("/api/videos/upload").authenticated()
                 .anyRequest().authenticated()
         );
 
