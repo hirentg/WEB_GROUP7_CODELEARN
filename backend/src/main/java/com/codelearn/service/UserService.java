@@ -9,9 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.util.Date;
 @Service
 public class UserService {
@@ -22,7 +21,8 @@ public class UserService {
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
     // Secret key cho JWT (nên lưu trong application.properties trong production)
-    private final Key jwtSecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private static final String SECRET_KEY_STRING = "mySecretKeyForJWTTokenGeneration123456789012345678901234567890";
+    private final SecretKey jwtSecretKey = Keys.hmacShaKeyFor(SECRET_KEY_STRING.getBytes());
     private final long jwtExpirationMs = 86400000; // 24 hours
     @Transactional
     public User registerUser(String name, String email, String password) {

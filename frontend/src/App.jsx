@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { Layout, Typography } from 'antd'
 import HomePage from './pages/HomePage'
 import CourseDetailsPage from './pages/CourseDetailsPage'
+import CourseLearnPage from './pages/CourseLearnPage'
+import MyCoursesPage from './pages/MyCoursesPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import Navbar from './components/Navbar'
@@ -17,6 +19,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/course/:id" element={<CourseDetailsPage />} />
+          <Route path="/course/:id/learn" element={<CourseLearnPage />} />
+          <Route path="/my-learning" element={<MyCoursesPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
