@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Form, Input, Button, Card, Typography, message } from 'antd'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
@@ -10,15 +10,21 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [searchParams] = useSearchParams()
 
   async function onFinish(values) {
     setLoading(true)
     try {
       const res = await api.post('/auth/login', values)
       if (res && res.token) {
-        login({ email: res.email, name: res.name }, res.token)
+        login({ id: res.id, email: res.email, name: res.name }, res.token)
         message.success('Login successful!')
-        navigate('/')
+        
+        // Lấy redirect path từ query param hoặc localStorage
+        const redirectPath = searchParams.get('redirect') || localStorage.getItem('redirectAfterLogin') || '/'
+        localStorage.removeItem('redirectAfterLogin')
+        
+        navigate(redirectPath)
       } else {
         message.error('Invalid response from server')
       }

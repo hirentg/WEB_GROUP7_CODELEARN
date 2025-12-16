@@ -29,7 +29,8 @@ public class AuthController {
                 "status", "ok", 
                 "token", token,
                 "email", user.getEmail(),
-                "name", user.getName()
+                "name", user.getName(),
+                "id", user.getId()
             ));
         } else {
             return ResponseEntity.status(401).body(Map.of("status", "error", "message", "Invalid credentials"));

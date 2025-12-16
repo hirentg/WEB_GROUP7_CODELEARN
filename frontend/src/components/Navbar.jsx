@@ -14,7 +14,7 @@ export default function Navbar() {
       key: 'learning',
       label: 'My Learning',
       icon: <BookOutlined />,
-      onClick: () => navigate('/')
+      onClick: () => navigate('/my-learning')
     },
     {
       key: 'logout',

@@ -76,7 +76,9 @@ public class CourseController {
 
     @GetMapping
     public List<Course> getCourses() {
-        return sampleCourses();
+        List<Course> courses = sampleCourses();
+        System.out.println("Returning " + courses.size() + " courses");
+        return courses;
     }
 
     @GetMapping("/{id}")

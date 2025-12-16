@@ -17,10 +17,21 @@ export default function HomePage() {
     let isMounted = true
     api.get('/courses')
       .then((res) => {
-        if (isMounted) setCourses(res)
+        console.log('Courses API response:', res)
+        if (isMounted) {
+          if (Array.isArray(res)) {
+            console.log('Setting courses:', res.length, 'courses')
+            setCourses(res)
+          } else {
+            console.error('Invalid response format:', res)
+            setError('Invalid response from server')
+            setCourses([])
+          }
+        }
       })
-      .catch(() => {
-        if (isMounted) setError('Failed to load courses')
+      .catch((err) => {
+        console.error('Error loading courses:', err)
+        if (isMounted) setError('Failed to load courses: ' + (err.message || 'Unknown error'))
       })
       .finally(() => {
         if (isMounted) setLoading(false)

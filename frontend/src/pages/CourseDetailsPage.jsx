@@ -9,13 +9,22 @@ const { Title, Paragraph, Text } = Typography
 export default function CourseDetailsPage() {
   const { id } = useParams()
   const [course, setCourse] = useState(null)
+  const [videoPreview, setVideoPreview] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
-    api.get(`/courses/${id}`)
-      .then((data) => { if (active) setCourse(data) })
+    Promise.all([
+      api.get(`/courses/${id}`),
+      api.get(`/video-previews/course/${id}`).catch(() => null) // Video preview is optional
+    ])
+      .then(([courseData, previewData]) => {
+        if (active) {
+          setCourse(courseData)
+          setVideoPreview(previewData)
+        }
+      })
       .catch(() => active && setError('Failed to load course'))
       .finally(() => active && setLoading(false))
     return () => { active = false }
@@ -163,22 +172,50 @@ export default function CourseDetailsPage() {
                 }}
                 bodyStyle={{ padding: '24px' }}
               >
-                <div style={{
-                  width: '100%',
-                  height: '200px',
-                  background: '#000',
-                  borderRadius: '8px',
-                  marginBottom: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  position: 'relative',
-                  cursor: 'pointer'
-                }}>
-                  <PlayCircleFilled style={{ fontSize: '64px', opacity: 0.8 }} />
-                  <Text style={{ position: 'absolute', bottom: '16px', color: '#fff', fontWeight: 600 }}>Preview this course</Text>
-                </div>
+                {videoPreview ? (
+                  <div style={{ marginBottom: '24px' }}>
+                    <video
+                      controls
+                      style={{
+                        width: '100%',
+                        borderRadius: '8px',
+                        maxHeight: '300px',
+                        backgroundColor: '#000'
+                      }}
+                      poster={course.thumbnailUrl}
+                    >
+                      <source src={videoPreview.previewVideoUrl} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                    <div style={{ marginTop: '12px' }}>
+                      <Text strong style={{ display: 'block', marginBottom: '4px' }}>
+                        {videoPreview.previewTitle}
+                      </Text>
+                      {videoPreview.duration && (
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          Duration: {Math.floor(videoPreview.duration / 60)}:{(videoPreview.duration % 60).toString().padStart(2, '0')}
+                        </Text>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{
+                    width: '100%',
+                    height: '200px',
+                    background: '#000',
+                    borderRadius: '8px',
+                    marginBottom: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    position: 'relative',
+                    cursor: 'pointer'
+                  }}>
+                    <PlayCircleFilled style={{ fontSize: '64px', opacity: 0.8 }} />
+                    <Text style={{ position: 'absolute', bottom: '16px', color: '#fff', fontWeight: 600 }}>Preview not available</Text>
+                  </div>
+                )}
 
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
                   <div>

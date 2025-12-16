@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'
 import CourseDetailsPage from './pages/CourseDetailsPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import MyLearningPage from './pages/MyLearningPage'
 import Navbar from './components/Navbar'
 
 const { Footer } = Layout
@@ -17,6 +18,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/course/:id" element={<CourseDetailsPage />} />
+          <Route path="/my-learning" element={<MyLearningPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
