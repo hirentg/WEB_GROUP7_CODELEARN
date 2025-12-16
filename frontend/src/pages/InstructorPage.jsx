@@ -1,24 +1,17 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import InstructorLayout from '../components/Layout/InstructorLayout'
-import { Overview, StudentInteractions, Analytics, ProfileSettings } from '../components/InstructorManagement/Overview'
-import { Courses } from '../components/InstructorManagement/Courses'
-import { Quizzes } from '../components/InstructorManagement/Quizzes'
-
-const viewComponents = {
-  overview: <Overview />,
-  courses: <Courses />,
-  quizzes: <Quizzes />,
-  interactions: <StudentInteractions />,
-  analytics: <Analytics />,
-  profile: <ProfileSettings />,
-}
 
 const InstructorPage = () => {
-  const [selected, setSelected] = useState('overview')
+  const location = useLocation()
+  
+  // Extract selected key from pathname (e.g., /instructor/courses -> courses)
+  const pathParts = location.pathname.split('/')
+  const selected = pathParts[2] || 'overview'
 
   return (
-    <InstructorLayout selected={selected} onSelect={(k) => setSelected(k)}>
-      {viewComponents[selected]}
+    <InstructorLayout selected={selected}>
+      <Outlet />
     </InstructorLayout>
   )
 }

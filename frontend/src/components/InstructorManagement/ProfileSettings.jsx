@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Card, Input, Button, Upload, Avatar, Checkbox, Space, Row, Col } from 'antd'
+import React, { useState, useEffect } from 'react'
+import { Card, Input, Button, Upload, Avatar, Checkbox, Space, Row, Col, message } from 'antd'
 import { 
   CameraOutlined,
   GlobalOutlined,
@@ -10,20 +10,28 @@ import {
   SaveOutlined,
   StarFilled
 } from '@ant-design/icons'
+import { api } from '../../services/api'
 
 const { TextArea } = Input
 
 const ProfileSettings = () => {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
-    firstName: 'John',
-    lastName: 'Professor',
-    email: 'john.professor@codelearn.com',
-    professionalTitle: 'Senior Software Engineer & Educator',
-    bio: 'Passionate educator with 10+ years of experience in software development. Specialized in web technologies and love helping students master coding skills.',
-    website: 'https://johnprofessor.dev',
-    twitter: 'https://twitter.com/johnprofessor',
-    linkedin: 'https://linkedin.com/in/johnprofessor',
-    github: 'https://github.com/johnprofessor',
+    name: '',
+    email: '',
+    qualifications: '',
+    bio: '',
+    website: '',
+    expertise: '',
+    avatarUrl: ''
+  })
+
+  const [stats, setStats] = useState({
+    totalCourses: 0,
+    totalStudents: 0,
+    avgRating: 0.0,
+    memberSince: 'Jan 2024'
   })
 
   const [preferences, setPreferences] = useState({
@@ -33,6 +41,48 @@ const ProfileSettings = () => {
     autoPublishAssignments: true,
   })
 
+  useEffect(() => {
+    fetchProfile()
+  }, [])
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true)
+      const data = await api.get('/instructor/profile')
+      
+      setFormData({
+        name: data.name || '',
+        email: data.email || '',
+        qualifications: data.qualifications || '',
+        bio: data.bio || '',
+        website: data.website || '',
+        expertise: data.expertise || '',
+        avatarUrl: data.avatarUrl || ''
+      })
+      
+      // Format createdAt to "Month Year" format
+      let memberSince = 'Jan 2024'
+      if (data.createdAt) {
+        const date = new Date(data.createdAt)
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December']
+        memberSince = `${monthNames[date.getMonth()]} ${date.getFullYear()}`
+      }
+      
+      setStats({
+        totalCourses: data.totalCourses || 0,
+        totalStudents: data.totalStudents || 0,
+        avgRating: data.avgRating || 0.0,
+        memberSince: memberSince
+      })
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+      message.error('Failed to load profile')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleInputChange = (field, value) => {
     setFormData({ ...formData, [field]: value })
   }
@@ -41,16 +91,25 @@ const ProfileSettings = () => {
     setPreferences({ ...preferences, [field]: checked })
   }
 
-  const handleSave = () => {
-    console.log('Saving profile...', formData, preferences)
-    // Handle save logic here
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      await api.put('/instructor/profile', formData)
+      message.success('Profile updated successfully!')
+      fetchProfile() // Refresh data
+    } catch (error) {
+      console.error('Error saving profile:', error)
+      message.error('Failed to update profile')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const quickStats = [
-    { label: 'Total Courses', value: '8' },
-    { label: 'Total Students', value: '1,234' },
-    { label: 'Member Since', value: 'Jan 2024' },
-    { label: 'Avg Rating', value: '4.8', icon: <StarFilled style={{ color: '#fbbf24', marginLeft: 4 }} /> },
+    { label: 'Total Courses', value: stats.totalCourses.toString() },
+    { label: 'Total Students', value: stats.totalStudents.toLocaleString() },
+    { label: 'Member Since', value: stats.memberSince },
+    { label: 'Avg Rating', value: stats.avgRating.toFixed(1), icon: <StarFilled style={{ color: '#fbbf24', marginLeft: 4 }} /> },
   ]
 
   const socialLinks = [
@@ -114,7 +173,12 @@ const ProfileSettings = () => {
         Manage your instructor profile and preferences
       </p>
 
-      <Row gutter={24}>
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 60 }}>
+          <p>Loading profile...</p>
+        </div>
+      ) : (
+        <Row gutter={24}>
         {/* Left Column */}
         <Col span={8}>
           {/* Profile Photo Card */}
@@ -129,7 +193,7 @@ const ProfileSettings = () => {
                   size={140} 
                   icon={<UserOutlined />}
                   style={{ background: '#9ca3af' }}
-                  src="https://randomuser.me/api/portraits/men/32.jpg"
+                  src={formData.avatarUrl || "https://randomuser.me/api/portraits/men/32.jpg"}
                 />
                 <div style={{
                   position: 'absolute',
@@ -190,30 +254,17 @@ const ProfileSettings = () => {
             style={{ marginBottom: 24, borderRadius: 12, border: '1px solid #e5e7eb' }}
             styles={{ header: { fontWeight: 600, fontSize: 16 } }}
           >
-            <Row gutter={16} style={{ marginBottom: 16 }}>
-              <Col span={12}>
-                <div style={{ marginBottom: 8 }}>
-                  <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>First Name</label>
-                </div>
-                <Input 
-                  size="large"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  style={{ borderRadius: 8 }}
-                />
-              </Col>
-              <Col span={12}>
-                <div style={{ marginBottom: 8 }}>
-                  <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Last Name</label>
-                </div>
-                <Input 
-                  size="large"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  style={{ borderRadius: 8 }}
-                />
-              </Col>
-            </Row>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 8 }}>
+                <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Full Name</label>
+              </div>
+              <Input 
+                size="large"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                style={{ borderRadius: 8 }}
+              />
+            </div>
 
             <div style={{ marginBottom: 16 }}>
               <div style={{ marginBottom: 8 }}>
@@ -233,8 +284,22 @@ const ProfileSettings = () => {
               </div>
               <Input 
                 size="large"
-                value={formData.professionalTitle}
-                onChange={(e) => handleInputChange('professionalTitle', e.target.value)}
+                value={formData.qualifications}
+                onChange={(e) => handleInputChange('qualifications', e.target.value)}
+                placeholder="e.g., PhD in Computer Science, 10+ years teaching experience"
+                style={{ borderRadius: 8 }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 8 }}>
+                <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Expertise</label>
+              </div>
+              <Input 
+                size="large"
+                value={formData.expertise}
+                onChange={(e) => handleInputChange('expertise', e.target.value)}
+                placeholder="e.g., Web Development, Machine Learning, Cloud Computing"
                 style={{ borderRadius: 8 }}
               />
             </div>
@@ -258,33 +323,29 @@ const ProfileSettings = () => {
             style={{ marginBottom: 24, borderRadius: 12, border: '1px solid #e5e7eb' }}
             styles={{ header: { fontWeight: 600, fontSize: 16 } }}
           >
-            {socialLinks.map((social) => (
-              <div key={social.key} style={{ marginBottom: 16 }}>
-                <Input 
-                  size="large"
-                  value={formData[social.key]}
-                  onChange={(e) => handleInputChange(social.key, e.target.value)}
-                  placeholder={social.placeholder}
-                  prefix={
-                    <div style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 8,
-                      background: social.bgColor,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: 8
-                    }}>
-                      {React.cloneElement(social.icon, { 
-                        style: { fontSize: 18, color: social.iconColor } 
-                      })}
-                    </div>
-                  }
-                  style={{ borderRadius: 8 }}
-                />
-              </div>
-            ))}
+            <div style={{ marginBottom: 16 }}>
+              <Input 
+                size="large"
+                value={formData.website}
+                onChange={(e) => handleInputChange('website', e.target.value)}
+                placeholder="https://github.com/username"
+                prefix={
+                  <div style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    background: '#1f2937',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 8
+                  }}>
+                    <GithubOutlined style={{ fontSize: 18, color: '#fff' }} />
+                  </div>
+                }
+                style={{ borderRadius: 8 }}
+              />
+            </div>
           </Card>
 
           {/* Teaching Preferences Card */}
@@ -324,6 +385,7 @@ const ProfileSettings = () => {
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
             <Button 
               size="large"
+              onClick={fetchProfile}
               style={{ 
                 borderRadius: 8,
                 minWidth: 120,
@@ -337,6 +399,7 @@ const ProfileSettings = () => {
               size="large"
               icon={<SaveOutlined />}
               onClick={handleSave}
+              loading={saving}
               style={{ 
                 background: '#6366f1',
                 borderColor: '#6366f1',
@@ -350,6 +413,7 @@ const ProfileSettings = () => {
           </div>
         </Col>
       </Row>
+      )}
     </div>
   )
 }

@@ -10,10 +10,17 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
 
     // Cấu hình các quyền truy cập và bảo mật cho các URL
     @Bean
@@ -29,10 +36,20 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/courses/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/videos/**/stream").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/videos/*/stream").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/courses/instructor/my-courses").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/quizzes/instructor/my-quizzes").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/quizzes/*").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/courses").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/quizzes").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/courses/*").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/quizzes/*").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/courses/*").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/quizzes/*").authenticated()
                 .requestMatchers("/api/purchases/**").authenticated()
                 .requestMatchers("/api/videos/upload").authenticated()
+                .requestMatchers("/api/instructor/profile").authenticated()
                 .anyRequest().authenticated()
         );
 
@@ -40,6 +57,10 @@ public class SecurityConfig {
         http.exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) ->
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
         ));
+        
+        // Add JWT filter before UsernamePasswordAuthenticationFilter
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        
         return http.build();
     }
 

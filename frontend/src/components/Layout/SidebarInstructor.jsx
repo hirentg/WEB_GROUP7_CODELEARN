@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Menu, Avatar, Space, Badge, Popover, Button, Divider } from 'antd'
+import { useNavigate } from 'react-router-dom'
 import {
   DashboardOutlined,
   BookOutlined,
@@ -291,8 +292,13 @@ const NotificationContent = ({ onClose }) => {
   )
 }
 
-const SidebarInstructor = ({ selected = 'overview', onSelect = () => {} }) => {
+const SidebarInstructor = ({ selected = 'overview' }) => {
+  const navigate = useNavigate()
   const [notificationOpen, setNotificationOpen] = useState(false)
+
+  const handleMenuClick = (e) => {
+    navigate(`/instructor/${e.key}`)
+  }
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '0 16px' }}>
@@ -307,7 +313,7 @@ const SidebarInstructor = ({ selected = 'overview', onSelect = () => {} }) => {
       <Menu
         mode="inline"
         selectedKeys={[selected]}
-        onClick={(e) => onSelect(e.key)}
+        onClick={handleMenuClick}
         items={items}
         style={{ borderRight: 'none', flex: 1 }}
       />

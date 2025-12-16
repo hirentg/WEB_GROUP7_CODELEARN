@@ -7,7 +7,12 @@ import MyCoursesPage from './pages/MyCoursesPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import InstructorPage from './pages/InstructorPage'
+import AdminPage from './pages/AdminPage'
 import Navbar from './components/Navbar'
+import ProtectedRoute from './components/ProtectedRoute'
+import { Overview, StudentInteractions, Analytics, ProfileSettings } from './components/InstructorManagement/Overview'
+import { Courses } from './components/InstructorManagement/Courses'
+import { Quizzes } from './components/InstructorManagement/Quizzes'
 
 const { Footer } = Layout
 const { Text } = Typography
@@ -20,11 +25,58 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/course/:id" element={<CourseDetailsPage />} />
-          <Route path="/instructor" element={<InstructorPage />} />
-          <Route path="/course/:id/learn" element={<CourseLearnPage />} />
-          <Route path="/my-learning" element={<MyCoursesPage />} />
+          
+          {/* Instructor routes - only accessible by INSTRUCTOR role */}
+          <Route 
+            path="/instructor" 
+            element={
+              <ProtectedRoute allowedRoles={['INSTRUCTOR']}>
+                <InstructorPage />
+              </ProtectedRoute>
+            } 
+          >
+            <Route index element={<Navigate to="/instructor/overview" replace />} />
+            <Route path="overview" element={<Overview />} />
+            <Route path="courses" element={<Courses />} />
+            <Route path="quizzes" element={<Quizzes />} />
+            <Route path="interactions" element={<StudentInteractions />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="profile" element={<ProfileSettings />} />
+          </Route>
+          
+          {/* Admin routes - only accessible by ADMIN role */}
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminPage />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Protected routes - require authentication */}
+          <Route 
+            path="/course/:id/learn" 
+            element={
+              <ProtectedRoute>
+                <CourseLearnPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/my-learning" 
+            element={
+              <ProtectedRoute>
+                <MyCoursesPage />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Auth routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          
+          {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout.Content>

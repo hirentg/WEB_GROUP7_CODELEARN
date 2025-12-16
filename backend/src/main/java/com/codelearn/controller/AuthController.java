@@ -27,9 +27,7 @@ public class AuthController {
             String token = userService.generateToken(user);
             return ResponseEntity.ok(Map.of(
                 "status", "ok", 
-                "token", token,
-                "email", user.getEmail(),
-                "name", user.getName()
+                "token", token
             ));
         } else {
             return ResponseEntity.status(401).body(Map.of("status", "error", "message", "Invalid credentials"));
@@ -44,8 +42,13 @@ public class AuthController {
         }
 
         // Lưu người dùng mới vào cơ sở dữ liệu với password đã được hash
-        User newUser = userService.registerUser(request.getName(), request.getEmail(), request.getPassword());
+        User newUser = userService.registerUser(request.getName(), request.getEmail(), request.getPassword(), request.getRole());
 
-        return ResponseEntity.ok(Map.of("status", "created", "email", newUser.getEmail(), "name", newUser.getName()));
+        return ResponseEntity.ok(Map.of(
+            "status", "created", 
+            "email", newUser.getEmail(), 
+            "name", newUser.getName(),
+            "role", newUser.getRole()
+        ));
     }
 }

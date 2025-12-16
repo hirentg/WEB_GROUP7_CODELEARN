@@ -4,7 +4,7 @@ import SidebarInstructor from './SidebarInstructor'
 
 const { Sider, Content } = Layout
 
-const InstructorLayout = ({ children, selected, onSelect }) => {
+const InstructorLayout = ({ children, selected }) => {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider 
@@ -21,7 +21,7 @@ const InstructorLayout = ({ children, selected, onSelect }) => {
           overflow: 'hidden'
         }}
       >
-        <SidebarInstructor selected={selected} onSelect={onSelect} />
+        <SidebarInstructor selected={selected} />
       </Sider>
 
       <Layout style={{ marginLeft: 260 }}>

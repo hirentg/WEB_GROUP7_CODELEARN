@@ -1,5 +1,6 @@
 package com.codelearn.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,6 +11,12 @@ public class Video {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "section_id")
+    private Long sectionId;
+    
+    @Column(name = "course_id", insertable = false, updatable = false)
+    private String courseId;
+    
     private String title;
     private String description;
     private String videoUrl;
@@ -17,6 +24,21 @@ public class Video {
     private Integer duration; // in seconds
     private Integer orderIndex; // order in course
     
+    @Column(name = "content_type")
+    private String contentType; // VIDEO, ARTICLE, QUIZ
+    
+    @Column(name = "is_preview")
+    private Boolean isPreview;
+    
+    @Column(name = "is_free")
+    private Boolean isFree;
+    
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "section_id", insertable = false, updatable = false)
+    private Section section;
+    
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id")
     private Course course;
@@ -87,6 +109,54 @@ public class Video {
     
     public void setOrderIndex(Integer orderIndex) {
         this.orderIndex = orderIndex;
+    }
+    
+    public String getContentType() {
+        return contentType;
+    }
+    
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+    
+    public Boolean getIsPreview() {
+        return isPreview;
+    }
+    
+    public void setIsPreview(Boolean isPreview) {
+        this.isPreview = isPreview;
+    }
+    
+    public Boolean getIsFree() {
+        return isFree;
+    }
+    
+    public void setIsFree(Boolean isFree) {
+        this.isFree = isFree;
+    }
+    
+    public Long getSectionId() {
+        return sectionId;
+    }
+    
+    public void setSectionId(Long sectionId) {
+        this.sectionId = sectionId;
+    }
+    
+    public String getCourseId() {
+        return courseId;
+    }
+    
+    public void setCourseId(String courseId) {
+        this.courseId = courseId;
+    }
+    
+    public Section getSection() {
+        return section;
+    }
+    
+    public void setSection(Section section) {
+        this.section = section;
     }
     
     public Course getCourse() {

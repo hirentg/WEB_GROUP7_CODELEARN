@@ -8,5 +8,6 @@ import java.util.List;
 @Repository
 public interface VideoRepository extends JpaRepository<Video, Long> {
     List<Video> findByCourseIdOrderByOrderIndexAsc(String courseId);
+    List<Video> findBySectionIdOrderByOrderIndexAsc(Long sectionId);
 }
 

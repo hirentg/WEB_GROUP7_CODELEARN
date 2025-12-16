@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { Steps, Button, Form, Input, Upload, Card, Checkbox, Space, Empty } from 'antd'
+import { Steps, Button, Form, Input, Upload, Card, Checkbox, Space, Empty, message } from 'antd'
 import { PlusOutlined, CloseOutlined, BookOutlined, CheckCircleFilled } from '@ant-design/icons'
+import { api } from '../../services/api'
 
 const { TextArea } = Input
 
@@ -10,11 +11,12 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
   const [fileList, setFileList] = useState([])
   const [sections, setSections] = useState([])
   const [courseData, setCourseData] = useState({})
+  const [loading, setLoading] = useState(false)
 
   const handleNext = async () => {
     if (currentStep === 0) {
       try {
-        const values = await form.validateFields(['title', 'description'])
+        const values = await form.validateFields(['title', 'description', 'requirements', 'what_you_learn', 'price'])
         setCourseData({ ...courseData, ...values })
         setCurrentStep(1)
       } catch (error) {
@@ -29,20 +31,87 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
     setCurrentStep(currentStep - 1)
   }
 
-  const handleSaveDraft = () => {
-    const allData = { ...courseData, sections, status: 'draft' }
-    onSubmit(allData)
-    handleReset()
+  const handleSaveDraft = async () => {
+    setLoading(true)
+    try {
+      const payload = {
+        title: courseData.title,
+        description: courseData.description,
+        requirements: courseData.requirements,
+        whatYouLearn: courseData.what_you_learn,
+        price: courseData.price,
+        thumbnailUrl: fileList.length > 0 ? URL.createObjectURL(fileList[0]) : '',
+        status: 'draft',
+        sections: sections.map((section, idx) => ({
+          title: section.title,
+          description: section.description || '',
+          orderIndex: idx,
+          videos: section.videos.map((video, vIdx) => ({
+            title: video.title,
+            videoUrl: video.videoUrl,
+            duration: video.duration,
+            orderIndex: vIdx
+          }))
+        }))
+      }
+      
+      const result = await api.post('/courses', payload)
+      message.success('Course saved as draft successfully!')
+      
+      if (onSubmit) {
+        onSubmit(result)
+      }
+      handleReset()
+    } catch (error) {
+      console.error('Error saving draft:', error)
+      message.error('Failed to save course. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handlePublish = async () => {
     try {
       await form.validateFields(['confirmOriginal', 'confirmReviewed'])
-      const allData = { ...courseData, sections, status: 'published' }
-      onSubmit(allData)
+      setLoading(true)
+      
+      const payload = {
+        title: courseData.title,
+        description: courseData.description,
+        requirements: courseData.requirements,
+        whatYouLearn: courseData.what_you_learn,
+        price: courseData.price,
+        thumbnailUrl: fileList.length > 0 ? URL.createObjectURL(fileList[0]) : '',
+        status: 'published',
+        sections: sections.map((section, idx) => ({
+          title: section.title,
+          description: section.description || '',
+          orderIndex: idx,
+          videos: section.videos.map((video, vIdx) => ({
+            title: video.title,
+            videoUrl: video.videoUrl,
+            duration: video.duration,
+            orderIndex: vIdx
+          }))
+        }))
+      }
+      
+      const result = await api.post('/courses', payload)
+      message.success('Course published successfully!')
+      
+      if (onSubmit) {
+        onSubmit(result)
+      }
       handleReset()
     } catch (error) {
-      console.error('Please confirm all checkboxes')
+      if (error.errorFields) {
+        console.error('Please confirm all checkboxes')
+      } else {
+        console.error('Error publishing course:', error)
+        message.error('Failed to publish course. Please try again.')
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -56,11 +125,42 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
   }
 
   const addSection = () => {
-    setSections([...sections, { id: Date.now(), title: '', lessons: [] }])
+    setSections([...sections, { id: Date.now(), title: '', description: '', videos: [] }])
   }
 
   const removeSection = (id) => {
     setSections(sections.filter(s => s.id !== id))
+  }
+
+  const updateSection = (index, field, value) => {
+    const newSections = [...sections]
+    newSections[index][field] = value
+    setSections(newSections)
+  }
+
+  const addVideo = (sectionIndex) => {
+    const newSections = [...sections]
+    newSections[sectionIndex].videos.push({
+      id: Date.now(),
+      title: '',
+      description: '',
+      duration: 0,
+      videoUrl: '',
+      orderIndex: newSections[sectionIndex].videos.length
+    })
+    setSections(newSections)
+  }
+
+  const removeVideo = (sectionIndex, videoIndex) => {
+    const newSections = [...sections]
+    newSections[sectionIndex].videos.splice(videoIndex, 1)
+    setSections(newSections)
+  }
+
+  const updateVideo = (sectionIndex, videoIndex, field, value) => {
+    const newSections = [...sections]
+    newSections[sectionIndex].videos[videoIndex][field] = value
+    setSections(newSections)
   }
 
   const uploadProps = {
@@ -156,6 +256,41 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
               />
             </Form.Item>
 
+            <Form.Item
+              name="requirements"
+              label="Requirements"
+              rules={[{ required: true, message: 'Please enter course requirements' }]}
+            >
+              <TextArea
+                rows={4}
+                placeholder="What are the prerequisites for this course? (e.g., Basic HTML, CSS knowledge)"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="what_you_learn"
+              label="What You'll Learn"
+              rules={[{ required: true, message: 'Please enter what students will learn' }]}
+            >
+              <TextArea
+                rows={4}
+                placeholder="What will students learn by the end of this course? (e.g., Build responsive websites, Master React hooks)"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="price"
+              label="Price"
+              rules={[{ required: true, message: 'Please enter course price' }]}
+            >
+              <Input
+                placeholder="e.g., $99.99 or Free"
+                size="large"
+              />
+            </Form.Item>
+
             <Form.Item name="thumbnail" label="Course Thumbnail">
               <Upload {...uploadProps}>
                 {fileList.length < 1 && (
@@ -196,12 +331,12 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
               />
             ) : (
               <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                {sections.map((section, index) => (
+                {sections.map((section, sectionIndex) => (
                   <Card
                     key={section.id}
                     size="small"
                     style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}
-                    title={`Section ${index + 1}`}
+                    title={`Section ${sectionIndex + 1}`}
                     extra={
                       <Button
                         type="text"
@@ -212,15 +347,88 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
                       />
                     }
                   >
-                    <Input
-                      placeholder="Section title"
-                      value={section.title}
-                      onChange={(e) => {
-                        const newSections = [...sections]
-                        newSections[index].title = e.target.value
-                        setSections(newSections)
-                      }}
-                    />
+                    <Space direction="vertical" style={{ width: '100%' }} size="small">
+                      <Input
+                        placeholder="Section title (e.g., Introduction to React)"
+                        value={section.title}
+                        onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
+                        size="large"
+                      />
+                      <TextArea
+                        placeholder="Section description (optional)"
+                        value={section.description}
+                        onChange={(e) => updateSection(sectionIndex, 'description', e.target.value)}
+                        rows={2}
+                      />
+                      
+                      {/* Videos in this section */}
+                      <div style={{ marginTop: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                          <span style={{ fontWeight: 500, color: '#6b7280' }}>Videos ({section.videos.length})</span>
+                          <Button
+                            type="dashed"
+                            size="small"
+                            icon={<PlusOutlined />}
+                            onClick={() => addVideo(sectionIndex)}
+                          >
+                            Add Video
+                          </Button>
+                        </div>
+                        
+                        {section.videos.length > 0 && (
+                          <Space direction="vertical" style={{ width: '100%', marginTop: 8 }} size="small">
+                            {section.videos.map((video, videoIndex) => (
+                              <Card
+                                key={video.id}
+                                size="small"
+                                style={{ background: '#fff', border: '1px solid #e5e7eb' }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                  <div style={{ flex: 1, marginRight: 8 }}>
+                                    <Input
+                                      placeholder="Video title"
+                                      value={video.title}
+                                      onChange={(e) => updateVideo(sectionIndex, videoIndex, 'title', e.target.value)}
+                                      style={{ marginBottom: 8 }}
+                                    />
+                                    <Input
+                                      placeholder="Video URL"
+                                      value={video.videoUrl}
+                                      onChange={(e) => updateVideo(sectionIndex, videoIndex, 'videoUrl', e.target.value)}
+                                      style={{ marginBottom: 8 }}
+                                    />
+                                    <div>
+                                      <div style={{ marginBottom: 4, fontSize: 13, color: '#6b7280' }}>
+                                        Duration (in seconds)
+                                      </div>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 300 (5 minutes)"
+                                        value={video.duration}
+                                        onChange={(e) => updateVideo(sectionIndex, videoIndex, 'duration', parseInt(e.target.value) || 0)}
+                                        style={{ width: '100%' }}
+                                        min={0}
+                                        addonAfter="seconds"
+                                      />
+                                      <div style={{ marginTop: 4, fontSize: 12, color: '#9ca3af' }}>
+                                        Tip: 1 minute = 60 seconds, 5 minutes = 300 seconds
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    type="text"
+                                    icon={<CloseOutlined />}
+                                    onClick={() => removeVideo(sectionIndex, videoIndex)}
+                                    danger
+                                    size="small"
+                                  />
+                                </div>
+                              </Card>
+                            ))}
+                          </Space>
+                        )}
+                      </div>
+                    </Space>
                   </Card>
                 ))}
               </Space>
@@ -243,7 +451,7 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
                   <strong>Sections:</strong> {sections.length}
                 </div>
                 <div>
-                  <strong>Total Lessons:</strong> {sections.reduce((acc, s) => acc + s.lessons.length, 0)}
+                  <strong>Total Videos:</strong> {sections.reduce((acc, s) => acc + s.videos.length, 0)}
                 </div>
               </div>
             </Card>
@@ -301,7 +509,7 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
         </div>
 
         <Space>
-          <Button size="large" onClick={handleSaveDraft}>
+          <Button size="large" onClick={handleSaveDraft} loading={loading} disabled={loading}>
             Save as Draft
           </Button>
           {currentStep < 2 ? (
@@ -310,6 +518,7 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
               size="large"
               onClick={handleNext}
               style={{ background: '#6366f1', borderColor: '#6366f1' }}
+              disabled={loading}
             >
               Next Step
             </Button>
@@ -319,6 +528,8 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
               size="large"
               onClick={handlePublish}
               style={{ background: '#16a34a', borderColor: '#16a34a' }}
+              loading={loading}
+              disabled={loading}
             >
               Publish Course
             </Button>

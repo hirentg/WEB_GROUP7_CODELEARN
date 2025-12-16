@@ -8,14 +8,20 @@ import {
   TrophyOutlined 
 } from '@ant-design/icons'
 
-const enrollmentData = [
-  { month: 'Jan', students: 387 },
-  { month: 'Feb', students: 542 },
-  { month: 'Mar', students: 701 },
-  { month: 'Apr', students: 892 },
-  { month: 'May', students: 1045 },
-  { month: 'Jun', students: 1234 },
-]
+const data = {
+  totalStudents: { value: 1254, changeText: '+12% from last month' },
+  activeCourses: { value: 12, changeText: '+2 from last month' },
+  pendingQuestions: { value: 23, changeText: '5 new today' },
+  avgCompletion: { value: '76%', changeText: '+3% this week' },
+  enrollmentTrend: [
+    { month: 'Jan', students: 65 },
+    { month: 'Feb', students: 85 },
+    { month: 'Mar', students: 95 },
+    { month: 'Apr', students: 110 },
+    { month: 'May', students: 130 },
+    { month: 'Jun', students: 145 }
+  ]
+}
 
 export const Overview = () => {
   return (
@@ -29,8 +35,12 @@ export const Overview = () => {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, marginBottom: 4 }}>Total Students</div>
-                <div style={{ color: '#fff', fontSize: 30, fontWeight: 700 }}>1,234</div>
-                <div style={{ color: '#d1fae5', marginTop: 8, fontSize: 13 }}>+12% from last month</div>
+                <div style={{ color: '#fff', fontSize: 30, fontWeight: 700 }}>
+                  {data.totalStudents.value.toLocaleString()}
+                </div>
+                <div style={{ color: '#d1fae5', marginTop: 8, fontSize: 13 }}>
+                  {data.totalStudents.changeText}
+                </div>
               </div>
               <div style={{ 
                 background: 'rgba(255,255,255,0.2)', 
@@ -51,8 +61,12 @@ export const Overview = () => {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, marginBottom: 4 }}>Active Courses</div>
-                <div style={{ color: '#fff', fontSize: 30, fontWeight: 700 }}>8</div>
-                <div style={{ color: '#d1fae5', marginTop: 8, fontSize: 13 }}>+2 from last month</div>
+                <div style={{ color: '#fff', fontSize: 30, fontWeight: 700 }}>
+                  {data.activeCourses.value}
+                </div>
+                <div style={{ color: '#d1fae5', marginTop: 8, fontSize: 13 }}>
+                  {data.activeCourses.changeText}
+                </div>
               </div>
               <div style={{ 
                 background: 'rgba(255,255,255,0.2)', 
@@ -73,8 +87,12 @@ export const Overview = () => {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, marginBottom: 4 }}>Pending Questions</div>
-                <div style={{ color: '#fff', fontSize: 30, fontWeight: 700 }}>23</div>
-                <div style={{ color: '#d1fae5', marginTop: 8, fontSize: 13 }}>+5 from last month</div>
+                <div style={{ color: '#fff', fontSize: 30, fontWeight: 700 }}>
+                  {data.pendingQuestions.value}
+                </div>
+                <div style={{ color: '#d1fae5', marginTop: 8, fontSize: 13 }}>
+                  {data.pendingQuestions.changeText}
+                </div>
               </div>
               <div style={{ 
                 background: 'rgba(255,255,255,0.2)', 
@@ -95,8 +113,12 @@ export const Overview = () => {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14, marginBottom: 4 }}>Avg. Completion</div>
-                <div style={{ color: '#fff', fontSize: 30, fontWeight: 700 }}>78%</div>
-                <div style={{ color: '#d1fae5', marginTop: 8, fontSize: 13 }}>+3% from last month</div>
+                <div style={{ color: '#fff', fontSize: 30, fontWeight: 700 }}>
+                  {data.avgCompletion.value}
+                </div>
+                <div style={{ color: '#d1fae5', marginTop: 8, fontSize: 13 }}>
+                  {data.avgCompletion.changeText}
+                </div>
               </div>
               <div style={{ 
                 background: 'rgba(255,255,255,0.2)', 
@@ -116,7 +138,7 @@ export const Overview = () => {
 
       <Card title="Student Enrollment Trend">
         <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={enrollmentData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+          <LineChart data={data.enrollmentTrend} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis 
               dataKey="month" 

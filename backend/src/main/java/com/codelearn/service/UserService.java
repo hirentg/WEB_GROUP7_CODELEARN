@@ -25,7 +25,7 @@ public class UserService {
     private final SecretKey jwtSecretKey = Keys.hmacShaKeyFor(SECRET_KEY_STRING.getBytes());
     private final long jwtExpirationMs = 86400000; // 24 hours
     @Transactional
-    public User registerUser(String name, String email, String password) {
+    public User registerUser(String name, String email, String password, String role) {
         if (userRepository.findByName(name) != null) {
             throw new RuntimeException("Username already exists");
         }
@@ -35,6 +35,7 @@ public class UserService {
         user.setName(name);
         user.setPassword(encodedPassword);
         user.setEmail(email);
+        user.setRole(role);
 
         return userRepository.save(user);
     }
@@ -62,6 +63,7 @@ public class UserService {
                 .setSubject(user.getEmail())
                 .claim("userId", user.getId())
                 .claim("name", user.getName())
+                .claim("role", user.getRole())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(jwtSecretKey)

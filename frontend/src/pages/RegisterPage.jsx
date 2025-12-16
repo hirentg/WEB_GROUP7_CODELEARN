@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Form, Input, Button, Card, Typography, message } from 'antd'
+import { Form, Input, Button, Card, Typography, message, Select } from 'antd'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 
 const { Title } = Typography
+const { Option } = Select
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -37,6 +38,7 @@ export default function RegisterPage() {
           onFinish={onFinish}
           layout="vertical"
           autoComplete="off"
+          initialValues={{ role: 'STUDENT' }}
         >
           <Form.Item
             label="Name"
@@ -63,6 +65,17 @@ export default function RegisterPage() {
             rules={[{ required: true, message: 'Please input your password!' }]}
           >
             <Input.Password size="large" />
+          </Form.Item>
+
+          <Form.Item
+            label="Register as"
+            name="role"
+            rules={[{ required: true, message: 'Please select your role!' }]}
+          >
+            <Select size="large" placeholder="Select your role">
+              <Option value="STUDENT">Student</Option>
+              <Option value="INSTRUCTOR">Instructor</Option>
+            </Select>
           </Form.Item>
 
           <Form.Item>

@@ -6,17 +6,19 @@ import { api } from '../../services/api'
 const { TextArea } = Input
 const { Option } = Select
 
-const CreateQuizModal = ({ onClose, onSubmit }) => {
+const EditQuizModal = ({ quizId, onClose, onSubmit }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [form] = Form.useForm()
   const [questions, setQuestions] = useState([])
   const [quizData, setQuizData] = useState({})
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
 
   useEffect(() => {
     fetchVideos()
-  }, [])
+    loadQuizData()
+  }, [quizId])
 
   const fetchVideos = async () => {
     try {
@@ -46,6 +48,52 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
     }
   }
 
+  const loadQuizData = async () => {
+    try {
+      setInitialLoading(true)
+      const data = await api.get(`/quizzes/${quizId}`)
+      
+      // Set basic quiz data
+      setQuizData({
+        videoId: data.videoId,
+        title: data.title,
+        timeLimit: data.timeLimitMinutes,
+        passingScore: data.passingScore
+      })
+
+      // Set form fields
+      form.setFieldsValue({
+        title: data.title,
+        videoId: data.videoId,
+        timeLimit: data.timeLimitMinutes,
+        passingScore: data.passingScore
+      })
+
+      // Load questions with options
+      const loadedQuestions = data.questions.map(q => {
+        // Find correct answer index
+        const correctAnswerIndex = q.options.findIndex(opt => opt.isCorrect)
+        
+        return {
+          id: q.id,
+          type: q.questionType === 'TRUE_FALSE' ? 'true-false' : 'multiple-choice',
+          question: q.questionText,
+          points: q.points,
+          explanation: q.explanation || '',
+          options: q.options.map(opt => opt.optionText),
+          correctAnswer: correctAnswerIndex >= 0 ? correctAnswerIndex : null
+        }
+      })
+      
+      setQuestions(loadedQuestions)
+    } catch (error) {
+      console.error('Error loading quiz:', error)
+      message.error('Failed to load quiz data')
+    } finally {
+      setInitialLoading(false)
+    }
+  }
+
   const handleNext = async () => {
     if (currentStep === 0) {
       try {
@@ -68,10 +116,10 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
     try {
       setLoading(true)
       const payload = buildQuizPayload('draft')
-      await api.post('/quizzes', payload)
+      await api.put(`/quizzes/${quizId}`, payload)
       message.success('Quiz saved as draft!')
       onSubmit(payload)
-      handleReset()
+      onClose()
     } catch (error) {
       console.error('Error saving quiz:', error)
       message.error('Failed to save quiz')
@@ -85,10 +133,10 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
       await form.validateFields(['confirmReviewed'])
       setLoading(true)
       const payload = buildQuizPayload('active')
-      await api.post('/quizzes', payload)
+      await api.put(`/quizzes/${quizId}`, payload)
       message.success('Quiz published successfully!')
       onSubmit(payload)
-      handleReset()
+      onClose()
     } catch (error) {
       if (error.errorFields) {
         console.error('Please confirm checkbox')
@@ -125,10 +173,6 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
   }
 
   const handleReset = () => {
-    setCurrentStep(0)
-    form.resetFields()
-    setQuestions([])
-    setQuizData({})
     onClose()
   }
 
@@ -139,7 +183,7 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
       question: '',
       points: 10,
       explanation: '',
-      options: type === 'multiple-choice' ? ['', '', '', ''] : type === 'true-false' ? ['True', 'False'] : [],
+      options: type === 'multiple-choice' ? ['', '', '', ''] : type === 'true-false' ? ['Yes', 'No'] : [],
       correctAnswer: type === 'true-false' ? 0 : null
     }
     setQuestions([...questions, newQuestion])
@@ -181,7 +225,7 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
       icon: currentStep > 0 ? <CheckCircleFilled style={{ color: '#52c41a' }} /> : '1',
     },
     {
-      title: 'Add Questions',
+      title: 'Edit Questions',
       icon: currentStep > 1 ? <CheckCircleFilled style={{ color: '#52c41a' }} /> : '2',
     },
     {
@@ -192,12 +236,20 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
 
   const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0)
 
+  if (initialLoading) {
+    return (
+      <div style={{ background: '#fff', minHeight: '100vh', padding: '32px 48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p>Loading quiz data...</p>
+      </div>
+    )
+  }
+
   return (
     <div style={{ background: '#fff', minHeight: '100vh', padding: '32px 48px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 }}>
         <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Create New Quiz</h2>
-          <p style={{ color: '#6b7280', margin: 0 }}>Build an assessment for your students</p>
+          <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Edit Quiz</h2>
+          <p style={{ color: '#6b7280', margin: 0 }}>Update your quiz assessment</p>
         </div>
         <Button 
           type="text" 
@@ -249,13 +301,14 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
 
             <Form.Item
               name="videoId"
-              label="Select Video"
+              label="Video"
               rules={[{ required: true, message: 'Please select a video' }]}
             >
               <Select 
                 placeholder="Choose a video..." 
                 size="large"
                 loading={videos.length === 0}
+                disabled={true}
                 showSearch
                 filterOption={(input, option) =>
                   option.children.toLowerCase().includes(input.toLowerCase())
@@ -274,7 +327,6 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
                 name="timeLimit"
                 label="Time Limit (minutes)"
                 rules={[{ required: true, message: 'Please enter time limit' }]}
-                initialValue={30}
               >
                 <InputNumber style={{ width: '100%' }} min={1} size="large" />
               </Form.Item>
@@ -283,7 +335,6 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
                 name="passingScore"
                 label="Passing Score (%)"
                 rules={[{ required: true, message: 'Please enter passing score' }]}
-                initialValue={70}
               >
                 <InputNumber style={{ width: '100%' }} min={0} max={100} size="large" />
               </Form.Item>
@@ -291,7 +342,7 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
           </Card>
         )}
 
-        {/* Step 2: Add Questions */}
+        {/* Step 2: Edit Questions */}
         {currentStep === 1 && (
           <Card style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12 }}>
             <div style={{ marginBottom: 24 }}>
@@ -310,12 +361,6 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
                   </Button>
                   <Button icon={<PlusOutlined />} onClick={() => addQuestion('true-false')}>
                     True/False
-                  </Button>
-                  <Button icon={<PlusOutlined />} onClick={() => addQuestion('coding')}>
-                    Coding Challenge
-                  </Button>
-                  <Button icon={<PlusOutlined />} onClick={() => addQuestion('short-answer')}>
-                    Short Answer
                   </Button>
                 </Space>
               </div>
@@ -339,9 +384,7 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
                       fontSize: 12,
                       fontWeight: 600
                     }}>
-                      {question.type === 'multiple-choice' ? 'Multiple Choice' : 
-                       question.type === 'true-false' ? 'True/False' :
-                       question.type === 'coding' ? 'Coding Challenge' : 'Short Answer'}
+                      {question.type === 'multiple-choice' ? 'Multiple Choice' : 'True/False'}
                     </span>
                     <Input
                       placeholder="Question text"
@@ -467,9 +510,7 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
                       borderRadius: 4, 
                       fontSize: 12 
                     }}>
-                      {q.type === 'multiple-choice' ? 'Multiple Choice' : 
-                       q.type === 'true-false' ? 'True/False' :
-                       q.type === 'coding' ? 'Coding Challenge' : 'Short Answer'}
+                      {q.type === 'multiple-choice' ? 'Multiple Choice' : 'True/False'}
                     </span>
                     <span style={{ fontWeight: 600 }}>{q.points} pts</span>
                   </Space>
@@ -516,7 +557,7 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
         </div>
 
         <Space>
-          <Button size="large" icon={<PlusOutlined />} onClick={handleSaveDraft}>
+          <Button size="large" icon={<PlusOutlined />} onClick={handleSaveDraft} loading={loading}>
             Save as Draft
           </Button>
           {currentStep < 2 ? (
@@ -533,6 +574,7 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
               type="primary"
               size="large"
               onClick={handlePublish}
+              loading={loading}
               style={{ background: '#16a34a', borderColor: '#16a34a' }}
             >
               Publish Quiz
@@ -544,4 +586,4 @@ const CreateQuizModal = ({ onClose, onSubmit }) => {
   )
 }
 
-export default CreateQuizModal
+export default EditQuizModal

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Form, Input, Button, Card, Typography, message } from 'antd'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { decodeJwt } from '../utils/jwt'
 
 const { Title } = Typography
 
@@ -16,9 +17,22 @@ export default function LoginPage() {
     try {
       const res = await api.post('/auth/login', values)
       if (res && res.token) {
-        login({ email: res.email, name: res.name }, res.token)
+        // Decode token to verify role
+        const tokenData = decodeJwt(res.token)
+        const role = res.role || tokenData?.role
+        
+        // Save user data with role
+        login({ email: res.email, name: res.name, role: role }, res.token)
         message.success('Login successful!')
-        navigate('/')
+        
+        // Navigate based on role
+        if (role === 'INSTRUCTOR') {
+          navigate('/instructor')
+        } else if (role === 'ADMIN') {
+          navigate('/admin')
+        } else {
+          navigate('/')
+        }
       } else {
         message.error('Invalid response from server')
       }

@@ -1,68 +1,41 @@
-import React, { useState } from 'react'
-import { Row, Col, Tabs, Button, message, Modal } from 'antd'
+import React, { useState, useEffect } from 'react'
+import { Row, Col, Tabs, Button, message, Modal, Spin } from 'antd'
 import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
 import ButtonCardCourse from '../Button/ButtonCardCourse'
 import CreateCourseModal from '../Form/CreateCourseModal'
 import EditCourseModal from '../Form/EditCourseModal'
-
-const mockCourses = [
-  {
-    id: 1,
-    image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&q=80',
-    title: 'React Fundamentals',
-    description: 'Learn the basics of React including components, props, state, and hooks.',
-    students: 456,
-    completion: 82,
-    status: 'Published'
-  },
-  {
-    id: 2,
-    image: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=800&q=80',
-    title: 'JavaScript Mastery',
-    description: 'Master modern JavaScript ES6+ features and best practices.',
-    students: 234,
-    completion: 75,
-    status: 'Published'
-  },
-  {
-    id: 3,
-    image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=800&q=80',
-    title: 'Python Basics',
-    description: 'Introduction to Python programming for beginners.',
-    students: 189,
-    completion: 68,
-    status: 'Published'
-  },
-  {
-    id: 4,
-    image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80',
-    title: 'Node.js Backend Development',
-    description: 'Build scalable backend applications with Node.js and Express.',
-    students: 312,
-    completion: 71,
-    status: 'Published'
-  },
-  {
-    id: 5,
-    image: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=800&q=80',
-    title: 'Advanced TypeScript',
-    description: 'Deep dive into TypeScript type system and advanced patterns.',
-    students: 0,
-    completion: 0,
-    status: 'Draft'
-  },
-]
+import { api } from '../../services/api'
 
 export const Courses = () => {
   const [activeTab, setActiveTab] = useState('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingCourse, setEditingCourse] = useState(null)
-  const [courses, setCourses] = useState(mockCourses)
+  const [courses, setCourses] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch courses from API
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true)
+        // Use instructor-specific endpoint to get only their courses
+        const data = await api.get('/courses/instructor/my-courses')
+        setCourses(data || [])
+      } catch (error) {
+        console.error('Error fetching courses:', error)
+        message.error('Failed to load courses')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCourses()
+  }, [])
 
   const filteredCourses = courses.filter(course => {
     if (activeTab === 'all') return true
-    if (activeTab === 'published') return course.status === 'Published'
-    if (activeTab === 'drafts') return course.status === 'Draft'
+    if (activeTab === 'published') return course.status === 'PUBLISHED'
+    if (activeTab === 'drafts') return course.status === 'DRAFT'
     return true
   })
 
@@ -73,11 +46,11 @@ export const Courses = () => {
     },
     {
       key: 'published',
-      label: `Published (${courses.filter(c => c.status === 'Published').length})`,
+      label: `Published (${courses.filter(c => c.status === 'PUBLISHED').length})`,
     },
     {
       key: 'drafts',
-      label: `Drafts (${courses.filter(c => c.status === 'Draft').length})`,
+      label: `Drafts (${courses.filter(c => c.status === 'DRAFT').length})`,
     },
   ]
 
@@ -102,27 +75,54 @@ export const Courses = () => {
       okType: 'danger',
       cancelText: 'Cancel',
       centered: true,
-      onOk() {
-        // Remove from UI immediately
-        setCourses(courses.filter(c => c.id !== id))
-        message.success('Course deleted successfully!')
-        
-        // TODO: Call API to delete from database
-        // api.deleteCourse(id)
+      async onOk() {
+        try {
+          // Call API to delete from database
+          await api.delete(`/courses/${id}`)
+          
+          // Remove from UI after successful deletion
+          setCourses(courses.filter(c => c.id !== id))
+          message.success('Course deleted successfully!')
+        } catch (error) {
+          console.error('Error deleting course:', error)
+          if (error.response?.status === 403) {
+            message.error("You don't have permission to delete this course")
+          } else if (error.response?.status === 404) {
+            message.error('Course not found')
+          } else {
+            message.error('Failed to delete course. Please try again.')
+          }
+        }
       },
     })
   }
 
-  const handleCreateCourse = (values) => {
-    console.log('New course:', values)
-    message.success(values.status === 'published' ? 'Course published successfully!' : 'Course saved as draft!')
+  const handleCreateCourse = async (newCourse) => {
+    // Refresh the course list after successful creation
+    try {
+      const data = await api.get('/courses/instructor/my-courses')
+      setCourses(data || [])
+    } catch (error) {
+      console.error('Error refreshing courses:', error)
+    }
     setIsModalOpen(false)
   }
 
-  const handleEditCourse = (values) => {
-    console.log('Update course:', values)
-    message.success(values.status === 'published' ? 'Course updated and published!' : 'Course updated as draft!')
-    setEditingCourse(null)
+  const handleEditCourse = async (values) => {
+    try {
+      // Call API to update course
+      await api.put(`/courses/${editingCourse.id}`, values)
+      
+      // Refresh course list
+      const data = await api.get('/courses/instructor/my-courses')
+      setCourses(data || [])
+      
+      message.success(values.status === 'published' ? 'Course updated and published!' : 'Course updated as draft!')
+      setEditingCourse(null)
+    } catch (error) {
+      console.error('Error updating course:', error)
+      message.error('Failed to update course. Please try again.')
+    }
   }
 
   // If editing course, show the edit form
@@ -186,22 +186,33 @@ export const Courses = () => {
         size="large"
       />
 
-      <Row gutter={[24, 24]}>
-        {filteredCourses.map(course => (
-          <Col xs={24} sm={12} lg={8} key={course.id}>
-            <ButtonCardCourse
-              image={course.image}
-              title={course.title}
-              description={course.description}
-              students={course.students}
-              completion={course.completion}
-              status={course.status}
-              onEdit={() => handleEdit(course.id)}
-              onDelete={() => handleDelete(course.id)}
-            />
-          </Col>
-        ))}
-      </Row>
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '60px 0' }}>
+          <Spin size="large" />
+          <p style={{ marginTop: 16, color: '#6b7280' }}>Loading courses...</p>
+        </div>
+      ) : filteredCourses.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 0' }}>
+          <p style={{ fontSize: 16, color: '#6b7280' }}>No courses found</p>
+        </div>
+      ) : (
+        <Row gutter={[24, 24]}>
+          {filteredCourses.map(course => (
+            <Col xs={24} sm={12} lg={8} key={course.id}>
+              <ButtonCardCourse
+                image={course.thumbnailUrl}
+                title={course.title}
+                description={course.description}
+                students={course.students}
+                completion={course.completion}
+                status={course.status}
+                onEdit={() => handleEdit(course.id)}
+                onDelete={() => handleDelete(course.id)}
+              />
+            </Col>
+          ))}
+        </Row>
+      )}
     </div>
   )
 }
