@@ -5,6 +5,8 @@ import CourseDetailsPage from './pages/CourseDetailsPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import MyLearningPage from './pages/MyLearningPage'
+import CheckoutPage from './pages/CheckoutPage'
+import CourseLearningPage from './pages/CourseLearningPage'
 import Navbar from './components/Navbar'
 
 const { Footer } = Layout
@@ -18,6 +20,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/course/:id" element={<CourseDetailsPage />} />
+          <Route path="/checkout/:courseId" element={<CheckoutPage />} />
+          <Route path="/learn/:courseId" element={<CourseLearningPage />} />
           <Route path="/my-learning" element={<MyLearningPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

@@ -10,9 +10,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.security.Keys;
-import java.security.Key;
+import java.nio.charset.StandardCharsets;
+import javax.crypto.SecretKey;
 import java.util.Date;
+
 @Service
 public class UserService {
 
@@ -20,10 +23,12 @@ public class UserService {
     private UserRepository userRepository;
 
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    
-    // Secret key cho JWT (nên lưu trong application.properties trong production)
-    private final Key jwtSecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+    // Fixed secret key for JWT (should be in application.properties in production)
+    private static final String SECRET_STRING = "MySecretKeyForCodeLearn12345678901234567890123456";
+    private final SecretKey jwtSecretKey = Keys.hmacShaKeyFor(SECRET_STRING.getBytes(StandardCharsets.UTF_8));
     private final long jwtExpirationMs = 86400000; // 24 hours
+
     @Transactional
     public User registerUser(String name, String email, String password) {
         if (userRepository.findByName(name) != null) {
@@ -42,22 +47,26 @@ public class UserService {
     public User findByName(String username) {
         return userRepository.findByName(username);
     }
+
     public boolean checkPassword(String rawPassword, String encodedPassword) {
-        return passwordEncoder.matches(rawPassword, encodedPassword); // Sử dụng BCryptPasswordEncoder để so sánh mật khẩu
+        return passwordEncoder.matches(rawPassword, encodedPassword); // Sử dụng BCryptPasswordEncoder để so sánh mật
+                                                                      // khẩu
     }
+
     public User findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
+
     @Transactional
     public User save(User user) {
         return userRepository.save(user);
     }
-    
+
     // Tạo JWT token cho user
     public String generateToken(User user) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
-        
+
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("userId", user.getId())
@@ -66,5 +75,26 @@ public class UserService {
                 .setExpiration(expiryDate)
                 .signWith(jwtSecretKey)
                 .compact();
+    }
+
+    /**
+     * Parse JWT token and extract user ID
+     */
+    public Long parseTokenForUserId(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(jwtSecretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            Object userIdClaim = claims.get("userId");
+            if (userIdClaim instanceof Number) {
+                return ((Number) userIdClaim).longValue();
+            }
+            return Long.parseLong(userIdClaim.toString());
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

@@ -19,26 +19,35 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // Enable CORS support for the security filter chain
-        http.cors(cors -> {});
+        http.cors(cors -> {
+        });
 
-        // Disable CSRF for API usage and use stateless session management for token-based auth
+        // Disable CSRF for API usage and use stateless session management for
+        // token-based auth
         http.csrf(csrf -> csrf.disable());
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         // Allow unauthenticated access to the REST auth endpoints and CORS preflight
+        // Note: Some endpoints handle auth internally via JWT token in Authorization
+        // header
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/courses/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/video-previews/**").permitAll() // Public access for video previews
-                .requestMatchers(HttpMethod.GET, "/api/users/my-learning").permitAll() // FAKE DATA - allow public for testing
-                .anyRequest().authenticated()
-        );
+                .requestMatchers(HttpMethod.GET, "/api/video-previews/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/my-learning").permitAll()
+                // Payment endpoints - handle auth internally via SecurityUtils
+                .requestMatchers(HttpMethod.POST, "/api/payments/**").permitAll()
+                // Lesson endpoints - handle auth internally via SecurityUtils
+                .requestMatchers("/api/courses/*/lessons").permitAll()
+                .requestMatchers("/api/courses/*/check-access").permitAll()
+                .requestMatchers("/api/courses/*/progress").permitAll()
+                .anyRequest().authenticated());
 
-        // Return 401 for unauthenticated API requests instead of redirecting to a login page
-        http.exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) ->
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
-        ));
+        // Return 401 for unauthenticated API requests instead of redirecting to a login
+        // page
+        http.exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> response
+                .sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")));
         return http.build();
     }
 
@@ -50,7 +59,8 @@ public class SecurityConfig {
 
     // Cấu hình AuthenticationManager để xử lý xác thực người dùng
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 }

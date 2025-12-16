@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { Row, Col, Typography, Rate, Button, Card, Spin, Alert, List, Space, Breadcrumb, Divider, Tag } from 'antd'
-import { PlayCircleOutlined, CheckCircleOutlined, GlobalOutlined, ClockCircleOutlined, FileTextOutlined, UserOutlined, PlayCircleFilled, CheckCircleFilled } from '@ant-design/icons'
+import { PlayCircleOutlined, CheckCircleOutlined, GlobalOutlined, ClockCircleOutlined, FileTextOutlined, UserOutlined, PlayCircleFilled, RocketOutlined } from '@ant-design/icons'
 import { api } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 const { Title, Paragraph, Text } = Typography
 
 export default function CourseDetailsPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [course, setCourse] = useState(null)
   const [videoPreview, setVideoPreview] = useState(null)
+  const [hasAccess, setHasAccess] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -17,12 +21,14 @@ export default function CourseDetailsPage() {
     let active = true
     Promise.all([
       api.get(`/courses/${id}`),
-      api.get(`/video-previews/course/${id}`).catch(() => null) // Video preview is optional
+      api.get(`/video-previews/course/${id}`).catch(() => null),
+      api.get(`/courses/${id}/check-access`).catch(() => ({ hasAccess: false }))
     ])
-      .then(([courseData, previewData]) => {
+      .then(([courseData, previewData, accessData]) => {
         if (active) {
           setCourse(courseData)
           setVideoPreview(previewData)
+          setHasAccess(accessData?.hasAccess || false)
         }
       })
       .catch(() => active && setError('Failed to load course'))
@@ -225,14 +231,38 @@ export default function CourseDetailsPage() {
                     </Title>
                   </div>
 
-                  <Space direction="vertical" style={{ width: '100%' }}>
-                    <Button type="primary" size="large" block style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}>
-                      Add to Cart
+                  {hasAccess ? (
+                    <Button
+                      type="primary"
+                      size="large"
+                      block
+                      icon={<RocketOutlined />}
+                      style={{ height: '56px', fontSize: '18px', fontWeight: 700, background: '#52c41a' }}
+                      onClick={() => navigate(`/learn/${id}`)}
+                    >
+                      Go to Course
                     </Button>
-                    <Button size="large" block style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}>
-                      Buy Now
-                    </Button>
-                  </Space>
+                  ) : (
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <Button
+                        type="primary"
+                        size="large"
+                        block
+                        style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}
+                        onClick={() => navigate(`/checkout/${id}`)}
+                      >
+                        Buy Now
+                      </Button>
+                      <Button
+                        size="large"
+                        block
+                        style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}
+                        onClick={() => navigate(`/checkout/${id}`)}
+                      >
+                        Add to Cart
+                      </Button>
+                    </Space>
+                  )}
 
                   <div style={{ textAlign: 'center' }}>
                     <Text type="secondary" style={{ fontSize: '12px' }}>30-Day Money-Back Guarantee</Text>

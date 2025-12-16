@@ -13,10 +13,19 @@ async function request(method, path, body) {
     body: body ? JSON.stringify(body) : undefined,
     credentials: 'include'
   })
+
   if (!res.ok) {
     if (res.status === 404) return null
-    throw new Error(`HTTP ${res.status}`)
+    // Try to get error message from response body
+    try {
+      const errorData = await res.json()
+      throw new Error(errorData.message || errorData.error || `HTTP ${res.status}`)
+    } catch (e) {
+      if (e.message && !e.message.startsWith('HTTP')) throw e
+      throw new Error(`HTTP ${res.status}`)
+    }
   }
+
   const contentType = res.headers.get('content-type') || ''
   if (contentType.includes('application/json')) return res.json()
   return null

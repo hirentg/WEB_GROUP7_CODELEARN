@@ -94,7 +94,7 @@ export default function MyLearningPage() {
         <Row gutter={[24, 32]}>
           {courses.map((course) => {
             const isCompleted = course.progress === 100
-            
+
             return (
               <Col xs={24} sm={12} md={8} lg={6} key={course.courseId || course.id}>
                 <Card
@@ -105,7 +105,7 @@ export default function MyLearningPage() {
                       style={{
                         width: '100%',
                         height: '200px',
-                        background: course.thumbnail 
+                        background: course.thumbnail
                           ? `url(${course.thumbnail}) center/cover`
                           : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         position: 'relative',
@@ -114,7 +114,7 @@ export default function MyLearningPage() {
                         alignItems: 'center',
                         justifyContent: 'center'
                       }}
-                      onClick={() => navigate(`/course/${course.courseId || course.id}`)}
+                      onClick={() => navigate(`/learn/${course.courseId || course.id}`)}
                     >
                       {!course.thumbnail && (
                         <PlayCircleOutlined style={{ fontSize: '48px', color: '#fff', opacity: 0.9 }} />
@@ -162,11 +162,11 @@ export default function MyLearningPage() {
                     description={
                       <div style={{ marginTop: '12px' }}>
                         {course.description && (
-                          <Paragraph 
-                            ellipsis={{ rows: 2 }} 
-                            style={{ 
-                              marginBottom: '12px', 
-                              color: '#666', 
+                          <Paragraph
+                            ellipsis={{ rows: 2 }}
+                            style={{
+                              marginBottom: '12px',
+                              color: '#666',
                               fontSize: '13px',
                               minHeight: '40px'
                             }}
@@ -174,16 +174,16 @@ export default function MyLearningPage() {
                             {course.description}
                           </Paragraph>
                         )}
-                        
+
                         {course.progress > 0 && (
                           <div style={{ marginBottom: '12px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                               <Text type="secondary" style={{ fontSize: '12px' }}>Progress</Text>
                               <Text type="secondary" style={{ fontSize: '12px', fontWeight: 600 }}>{course.progress}%</Text>
                             </div>
-                            <Progress 
-                              percent={course.progress} 
-                              size="small" 
+                            <Progress
+                              percent={course.progress}
+                              size="small"
                               strokeColor={{
                                 '0%': '#108ee9',
                                 '100%': '#87d068',
@@ -191,20 +191,20 @@ export default function MyLearningPage() {
                             />
                           </div>
                         )}
-                        
+
                         {course.purchaseDate && (
                           <div style={{ marginBottom: '12px', color: '#999', fontSize: '11px' }}>
                             <ClockCircleOutlined /> Purchased: {formatDate(course.purchaseDate)}
                           </div>
                         )}
-                        
+
                         <Button
                           type="primary"
                           icon={<PlayCircleOutlined />}
                           block
                           onClick={(e) => {
                             e.stopPropagation()
-                            navigate(`/course/${course.courseId || course.id}`)
+                            navigate(`/learn/${course.courseId || course.id}`)
                           }}
                         >
                           {isCompleted ? 'Review Course' : course.progress > 0 ? 'Continue Learning' : 'Start Learning'}
