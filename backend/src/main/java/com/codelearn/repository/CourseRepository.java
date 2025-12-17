@@ -10,15 +10,19 @@ import java.util.List;
 
 @Repository
 public interface CourseRepository extends JpaRepository<Course, String> {
-    
+
     @Query(value = """
-        SELECT COALESCE(ROUND(CAST(AVG(pc.progress_percentage) AS numeric), 2), 0)
-        FROM purchased_courses pc
-        WHERE pc.course_id = :courseId
-        """, nativeQuery = true)
+            SELECT COALESCE(ROUND(CAST(AVG(pc.progress_percent) AS numeric), 2), 0)
+            FROM purchased_courses pc
+            WHERE pc.course_id = :courseId
+            """, nativeQuery = true)
     Double calculateCourseCompletion(@Param("courseId") String courseId);
-    
+
     List<Course> findByInstructorId(Long instructorId);
+
+    // Filter courses by status (e.g., "PUBLISHED", "DRAFT")
+    List<Course> findByStatus(String status);
+
+    // Case-insensitive status filter
+    List<Course> findByStatusIgnoreCase(String status);
 }
-
-

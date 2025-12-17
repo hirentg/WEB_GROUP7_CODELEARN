@@ -34,22 +34,14 @@ export default function CourseDetailsPage() {
     return () => { active = false }
   }, [id, user])
 
-  const handlePurchase = async () => {
+  const handlePurchase = () => {
     if (!user) {
+      localStorage.setItem('redirectAfterLogin', `/checkout/${id}`)
       navigate('/login')
       return
     }
-
-    setPurchasing(true)
-    try {
-      await api.post(`/purchases/${id}`)
-      message.success('Course purchased successfully!')
-      setIsPurchased(true)
-    } catch (err) {
-      message.error('Failed to purchase course. Please try again.')
-    } finally {
-      setPurchasing(false)
-    }
+    // Navigate to checkout page instead of direct purchase
+    navigate(`/checkout/${id}`)
   }
 
   const curriculum = [
@@ -221,10 +213,10 @@ export default function CourseDetailsPage() {
 
                   <Space direction="vertical" style={{ width: '100%' }}>
                     {isPurchased ? (
-                      <Button 
-                        type="primary" 
-                        size="large" 
-                        block 
+                      <Button
+                        type="primary"
+                        size="large"
+                        block
                         icon={<PlayCircleFilled />}
                         style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}
                         onClick={() => navigate(`/course/${id}/learn`)}
@@ -233,19 +225,19 @@ export default function CourseDetailsPage() {
                       </Button>
                     ) : (
                       <>
-                        <Button 
-                          type="primary" 
-                          size="large" 
-                          block 
+                        <Button
+                          type="primary"
+                          size="large"
+                          block
                           style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}
                           onClick={handlePurchase}
                           loading={purchasing}
                         >
                           {user ? 'Purchase Course' : 'Login to Purchase'}
                         </Button>
-                        <Button 
-                          size="large" 
-                          block 
+                        <Button
+                          size="large"
+                          block
                           style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}
                           onClick={() => navigate('/login')}
                         >

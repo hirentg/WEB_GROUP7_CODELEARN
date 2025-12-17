@@ -26,41 +26,50 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // Enable CORS support for the security filter chain
-        http.cors(cors -> {});
+        http.cors(cors -> {
+        });
 
-        // Disable CSRF for API usage and use stateless session management for token-based auth
+        // Disable CSRF for API usage and use stateless session management for
+        // token-based auth
         http.csrf(csrf -> csrf.disable());
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         // Allow unauthenticated access to the REST auth endpoints and CORS preflight
+        // IMPORTANT: More specific rules must come BEFORE wildcard rules
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/error").permitAll() // Allow error page access
+                // More specific patterns FIRST (before /api/courses/**)
+                .requestMatchers(HttpMethod.GET, "/api/courses/instructor/my-courses").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/courses").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/courses/*").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/courses/*").authenticated()
+                // Then allow public GET access to courses
                 .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/videos/*/stream").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/courses/instructor/my-courses").authenticated()
+                // Quiz endpoints
                 .requestMatchers(HttpMethod.GET, "/api/quizzes/instructor/my-quizzes").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/quizzes/*").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/courses").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/quizzes").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/courses/*").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/quizzes/*").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/courses/*").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/quizzes/*").authenticated()
+                // Purchase endpoints
+                .requestMatchers("/api/purchases/check/**").permitAll() // Check access can be public
                 .requestMatchers("/api/purchases/**").authenticated()
+                // Other authenticated endpoints
                 .requestMatchers("/api/videos/upload").authenticated()
                 .requestMatchers("/api/instructor/profile").authenticated()
-                .anyRequest().authenticated()
-        );
+                .anyRequest().authenticated());
 
-        // Return 401 for unauthenticated API requests instead of redirecting to a login page
-        http.exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) ->
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
-        ));
-        
+        // Return 401 for unauthenticated API requests instead of redirecting to a login
+        // page
+        http.exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> response
+                .sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")));
+
         // Add JWT filter before UsernamePasswordAuthenticationFilter
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
+
         return http.build();
     }
 
@@ -72,7 +81,8 @@ public class SecurityConfig {
 
     // Cấu hình AuthenticationManager để xử lý xác thực người dùng
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 }

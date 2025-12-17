@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Row, Col, Typography, Card, Spin, Alert, List, Button, Space } from 'antd'
-import { PlayCircleOutlined, CheckCircleOutlined, LeftOutlined } from '@ant-design/icons'
+import { Row, Col, Typography, Card, Spin, Alert, List, Button, Space, Tag, message } from 'antd'
+import { PlayCircleOutlined, CheckCircleOutlined, LeftOutlined, FormOutlined, TrophyOutlined } from '@ant-design/icons'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 
@@ -13,9 +13,11 @@ export default function CourseLearnPage() {
   const { user } = useAuth()
   const [course, setCourse] = useState(null)
   const [videos, setVideos] = useState([])
+  const [quizzes, setQuizzes] = useState([])
   const [selectedVideo, setSelectedVideo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [watchedVideos, setWatchedVideos] = useState(new Set())
 
   useEffect(() => {
     if (!user) {
@@ -28,7 +30,7 @@ export default function CourseLearnPage() {
     // Check if course is purchased
     api.get(`/purchases/check/${id}`)
       .then((res) => {
-        if (!res.purchased) {
+        if (!res?.purchased) {
           navigate(`/course/${id}`)
           return
         }
@@ -37,15 +39,20 @@ export default function CourseLearnPage() {
         if (isMounted) navigate(`/course/${id}`)
       })
 
-    // Load course and videos
+    // Load course, videos, and quizzes
     Promise.all([
       api.get(`/courses/${id}`),
-      api.get(`/courses/${id}/videos`)
+      api.get(`/courses/${id}/videos`),
+      api.get(`/quizzes`).catch(() => [])
     ])
-      .then(([courseData, videosData]) => {
+      .then(([courseData, videosData, quizzesData]) => {
         if (isMounted) {
           setCourse(courseData)
           setVideos(videosData || [])
+          const courseQuizzes = Array.isArray(quizzesData)
+            ? quizzesData.filter(q => q.courseId === id)
+            : []
+          setQuizzes(courseQuizzes)
           if (videosData && videosData.length > 0) {
             setSelectedVideo(videosData[0])
           }
@@ -68,9 +75,26 @@ export default function CourseLearnPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  if (!user) {
-    return null
+  const updateProgress = async (videoIndex) => {
+    if (!videos.length) return
+    const progressPercent = Math.round(((videoIndex + 1) / videos.length) * 100)
+    try {
+      await api.post('/purchases/progress', { courseId: id, progressPercent })
+    } catch (err) {
+      console.error('Failed to update progress:', err)
+    }
   }
+
+  const handleVideoEnd = () => {
+    if (selectedVideo) {
+      const currentIndex = videos.findIndex(v => v.id === selectedVideo.id)
+      setWatchedVideos(prev => new Set([...prev, selectedVideo.id]))
+      updateProgress(currentIndex)
+      message.success('Video completed! 🎉')
+    }
+  }
+
+  if (!user) return null
 
   if (loading) {
     return (
@@ -124,7 +148,6 @@ export default function CourseLearnPage() {
                     background: '#000',
                     borderRadius: '8px',
                     marginBottom: '24px',
-                    position: 'relative',
                     overflow: 'hidden'
                   }}>
                     <video
@@ -132,18 +155,17 @@ export default function CourseLearnPage() {
                       controls
                       style={{ width: '100%', height: '100%' }}
                       src={
-                        selectedVideo.videoUrl?.startsWith('http') 
-                          ? selectedVideo.videoUrl 
+                        selectedVideo.videoUrl?.startsWith('http')
+                          ? selectedVideo.videoUrl
                           : `http://localhost:8080/api/videos/${selectedVideo.id}/stream`
                       }
+                      onEnded={handleVideoEnd}
                     >
                       Your browser does not support the video tag.
                     </video>
                   </div>
                   <Title level={3} style={{ marginTop: 0 }}>{selectedVideo.title}</Title>
-                  {selectedVideo.description && (
-                    <Paragraph>{selectedVideo.description}</Paragraph>
-                  )}
+                  {selectedVideo.description && <Paragraph>{selectedVideo.description}</Paragraph>}
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '80px 0' }}>
@@ -154,9 +176,10 @@ export default function CourseLearnPage() {
           </Col>
 
           <Col xs={24} lg={8}>
-            <Card title="Course Content" style={{ position: 'sticky', top: '100px' }}>
+            <Card title="Course Content" style={{ marginBottom: '16px' }}>
               <List
                 dataSource={videos}
+                locale={{ emptyText: 'No videos available yet' }}
                 renderItem={(video, index) => (
                   <List.Item
                     style={{
@@ -170,12 +193,14 @@ export default function CourseLearnPage() {
                     onClick={() => setSelectedVideo(video)}
                   >
                     <Space>
-                      {selectedVideo?.id === video.id ? (
+                      {watchedVideos.has(video.id) ? (
+                        <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                      ) : selectedVideo?.id === video.id ? (
                         <PlayCircleOutlined style={{ color: 'var(--primary)' }} />
                       ) : (
-                        <CheckCircleOutlined style={{ color: 'var(--text-muted)' }} />
+                        <PlayCircleOutlined style={{ color: 'var(--text-muted)' }} />
                       )}
-                      <div style={{ flex: 1 }}>
+                      <div>
                         <Text strong={selectedVideo?.id === video.id}>
                           {index + 1}. {video.title}
                         </Text>
@@ -190,10 +215,44 @@ export default function CourseLearnPage() {
                 )}
               />
             </Card>
+
+            <Card title={<Space><FormOutlined /><span>Course Quizzes</span></Space>}>
+              {quizzes.length > 0 ? (
+                <List
+                  dataSource={quizzes}
+                  renderItem={(quiz) => (
+                    <List.Item>
+                      <div style={{ width: '100%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text strong>{quiz.title}</Text>
+                          <Tag color="blue">{quiz.questions?.length || 0} Q</Tag>
+                        </div>
+                        <Button
+                          type="primary"
+                          block
+                          style={{ marginTop: '8px' }}
+                          icon={<TrophyOutlined />}
+                          onClick={() => navigate(`/quiz/${quiz.id}`)}
+                        >
+                          Take Quiz
+                        </Button>
+                      </div>
+                    </List.Item>
+                  )}
+                />
+              ) : (
+                <div style={{ textAlign: 'center', padding: '24px' }}>
+                  <Text type="secondary">Complete videos to unlock quizzes</Text>
+                  <br />
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    {watchedVideos.size} / {videos.length} watched
+                  </Text>
+                </div>
+              )}
+            </Card>
           </Col>
         </Row>
       </div>
     </div>
   )
 }
-

@@ -20,21 +20,23 @@ import java.util.stream.Collectors;
 
 @Service
 public class CourseService {
-    
+
     private static final String DEFAULT_THUMBNAIL = "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&q=80";
-    private static final String DEFAULT_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Default video placeholder
-    
+    private static final String DEFAULT_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Default video
+                                                                                                   // placeholder
+
     @Autowired
     private CourseRepository courseRepository;
-    
+
     @Autowired
     private SectionRepository sectionRepository;
-    
+
     @Autowired
     private VideoRepository videoRepository;
-    
+
     public List<Course> getAllCourses() {
-        List<Course> courses = courseRepository.findAll();
+        // Only return PUBLISHED courses for public view (students)
+        List<Course> courses = courseRepository.findByStatusIgnoreCase("PUBLISHED");
         // Tính completion cho từng khóa học
         courses.forEach(course -> {
             Double completion = courseRepository.calculateCourseCompletion(course.getId());
@@ -42,7 +44,7 @@ public class CourseService {
         });
         return courses;
     }
-    
+
     public List<Course> getInstructorCourses(Long instructorId) {
         List<Course> courses = courseRepository.findByInstructorId(instructorId);
         // Tính completion cho từng khóa học
@@ -52,7 +54,7 @@ public class CourseService {
         });
         return courses;
     }
-    
+
     public Course getCourseById(String id) {
         Course course = courseRepository.findById(id).orElse(null);
         if (course != null) {
@@ -61,44 +63,42 @@ public class CourseService {
         }
         return course;
     }
-    
+
     public CourseDetailResponse getCourseDetailById(String id) {
         Course course = courseRepository.findById(id).orElse(null);
         if (course == null) {
             return null;
         }
-        
+
         // Calculate completion
         Double completion = courseRepository.calculateCourseCompletion(course.getId());
-        
+
         // Get sections with videos
         List<Section> sections = sectionRepository.findByCourseIdOrderByOrderIndexAsc(id);
-        
+
         // Map sections to DTO
         List<CourseDetailResponse.SectionWithVideos> sectionDtos = sections.stream()
-            .map(section -> {
-                List<Video> videos = videoRepository.findBySectionIdOrderByOrderIndexAsc(section.getId());
-                
-                List<CourseDetailResponse.VideoInfo> videoDtos = videos.stream()
-                    .map(video -> new CourseDetailResponse.VideoInfo(
-                        video.getId(),
-                        video.getTitle(),
-                        video.getVideoUrl(),
-                        video.getDuration(),
-                        video.getOrderIndex()
-                    ))
-                    .collect(Collectors.toList());
-                
-                return new CourseDetailResponse.SectionWithVideos(
-                    section.getId(),
-                    section.getTitle(),
-                    section.getDescription(),
-                    section.getOrderIndex(),
-                    videoDtos
-                );
-            })
-            .collect(Collectors.toList());
-        
+                .map(section -> {
+                    List<Video> videos = videoRepository.findBySectionIdOrderByOrderIndexAsc(section.getId());
+
+                    List<CourseDetailResponse.VideoInfo> videoDtos = videos.stream()
+                            .map(video -> new CourseDetailResponse.VideoInfo(
+                                    video.getId(),
+                                    video.getTitle(),
+                                    video.getVideoUrl(),
+                                    video.getDuration(),
+                                    video.getOrderIndex()))
+                            .collect(Collectors.toList());
+
+                    return new CourseDetailResponse.SectionWithVideos(
+                            section.getId(),
+                            section.getTitle(),
+                            section.getDescription(),
+                            section.getOrderIndex(),
+                            videoDtos);
+                })
+                .collect(Collectors.toList());
+
         // Create response DTO
         CourseDetailResponse response = new CourseDetailResponse();
         response.setId(course.getId());
@@ -122,79 +122,80 @@ public class CourseService {
         response.setWhatYouLearn(course.getWhatYouLearn());
         response.setTargetAudience(course.getTargetAudience());
         response.setSections(sectionDtos);
-        
+
         return response;
     }
-    
+
     public List<Video> getCourseVideos(String courseId) {
         return videoRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
     }
-    
+
     @Transactional
     public Course createCourse(CreateCourseRequest request, Long instructorId, String instructorName) {
         // Generate unique course ID
         String courseId = generateCourseId(request.getTitle());
-        
+
         // Use default thumbnail if not provided
         String thumbnailUrl = request.getThumbnailUrl();
         if (thumbnailUrl == null || thumbnailUrl.trim().isEmpty()) {
             thumbnailUrl = DEFAULT_THUMBNAIL;
         }
-        
+
         // Set default values if not provided
         String price = request.getPrice() != null ? request.getPrice() : "$0.00";
         String duration = request.getDuration() != null ? request.getDuration() : "0h 0m";
-        
+
         // lessons will be calculated from total videos later
         Integer lessons = 0;
-        
-        // Handle status from client (convert 'draft' -> 'DRAFT', 'published' -> 'PUBLISHED')
+
+        // Handle status from client (convert 'draft' -> 'DRAFT', 'published' ->
+        // 'PUBLISHED')
         String status = "DRAFT"; // default
         if (request.getStatus() != null) {
             status = request.getStatus().equalsIgnoreCase("published") ? "PUBLISHED" : "DRAFT";
         }
-        
+
         // Set default level if not provided
         String level = request.getLevel() != null ? request.getLevel().toUpperCase() : "BEGINNER";
         // Validate level value
         if (!level.matches("BEGINNER|INTERMEDIATE|ADVANCED|ALL_LEVELS")) {
             level = "BEGINNER";
         }
-        
+
         // Set default language if not provided
         String language = request.getLanguage() != null ? request.getLanguage() : "Vietnamese";
-        
+
         // Create course with default values
         Course course = new Course(
-            courseId,
-            request.getTitle(),
-            request.getDescription(),
-            instructorName, // Use name from JWT token
-            duration,
-            lessons,
-            thumbnailUrl,
-            0.0, // rating
-            0,   // numRatings
-            price,
-            0,   // students
-            0.0, // completion
-            status // from client or default DRAFT
+                courseId,
+                request.getTitle(),
+                request.getDescription(),
+                instructorName, // Use name from JWT token
+                duration,
+                lessons,
+                thumbnailUrl,
+                0.0, // rating
+                0, // numRatings
+                price,
+                0, // students
+                0.0, // completion
+                status // from client or default DRAFT
         );
-        
+
         // Set instructor ID
         course.setInstructorId(instructorId);
-        
+
         // Set level
         course.setLevel(level);
-        
+
         // Set language
         course.setLanguage(language);
-        
+
         // Set category if provided
         if (request.getCategoryId() != null) {
             course.setCategoryId(request.getCategoryId());
         }
-        
+
         // Set additional fields
         if (request.getRequirements() != null) {
             course.setRequirements(request.getRequirements());
@@ -202,13 +203,13 @@ public class CourseService {
         if (request.getWhatYouLearn() != null) {
             course.setWhatYouLearn(request.getWhatYouLearn());
         }
-        
+
         // Save course first
         Course savedCourse = courseRepository.save(course);
-        
+
         int totalVideos = 0; // Track total videos count
         int totalDurationSeconds = 0; // Track total duration in seconds
-        
+
         // Create sections and videos if provided
         if (request.getSections() != null && !request.getSections().isEmpty()) {
             for (CreateSectionRequest sectionReq : request.getSections()) {
@@ -217,20 +218,20 @@ public class CourseService {
                 section.setTitle(sectionReq.getTitle());
                 section.setDescription(sectionReq.getDescription());
                 section.setOrderIndex(sectionReq.getOrderIndex());
-                
+
                 Section savedSection = sectionRepository.save(section);
-                
+
                 // Create videos for this section
                 if (sectionReq.getVideos() != null && !sectionReq.getVideos().isEmpty()) {
                     for (CreateVideoRequest videoReq : sectionReq.getVideos()) {
                         Integer videoDuration = videoReq.getDuration() != null ? videoReq.getDuration() : 0;
-                        
+
                         // Use default video URL if not provided
                         String videoUrl = videoReq.getVideoUrl();
                         if (videoUrl == null || videoUrl.trim().isEmpty()) {
                             videoUrl = DEFAULT_VIDEO_URL;
                         }
-                        
+
                         Video video = new Video();
                         video.setSectionId(savedSection.getId());
                         video.setCourse(savedCourse);
@@ -241,7 +242,7 @@ public class CourseService {
                         video.setContentType("VIDEO"); // Default content type
                         video.setIsPreview(false);
                         video.setIsFree(false);
-                        
+
                         videoRepository.save(video);
                         totalVideos++; // Count each video
                         totalDurationSeconds += videoDuration; // Sum durations
@@ -249,37 +250,37 @@ public class CourseService {
                 }
             }
         }
-        
+
         // Update lessons count = total videos
         savedCourse.setLessons(totalVideos);
-        
+
         // Update duration from total video durations
         savedCourse.setDuration(formatDuration(totalDurationSeconds));
-        
+
         courseRepository.save(savedCourse);
-        
+
         return savedCourse;
     }
-    
+
     private String formatDuration(int totalSeconds) {
         int hours = totalSeconds / 3600;
         int minutes = (totalSeconds % 3600) / 60;
-        
+
         return hours + " hours " + minutes + " minutes";
     }
-    
+
     private String generateCourseId(String title) {
         // Generate ID from title (lowercase, replace spaces with hyphens)
         String baseId = title.toLowerCase()
-            .replaceAll("[^a-z0-9\\s-]", "")
-            .replaceAll("\\s+", "-")
-            .substring(0, Math.min(title.length(), 30));
-        
+                .replaceAll("[^a-z0-9\\s-]", "")
+                .replaceAll("\\s+", "-")
+                .substring(0, Math.min(title.length(), 30));
+
         // Add random suffix to ensure uniqueness
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         return baseId + "-" + suffix;
     }
-    
+
     @Transactional
     public void initializeSampleCourses() {
         // Initialize courses if they don't exist
@@ -297,10 +298,9 @@ public class CourseService {
                     "$14.99",
                     456,
                     82.0,
-                    "Published"
-            );
+                    "Published");
             courseRepository.save(course1);
-            
+
             Course course2 = new Course(
                     "spring-boot-zero-to-hero",
                     "JavaScript Mastery",
@@ -314,10 +314,9 @@ public class CourseService {
                     "$12.99",
                     234,
                     75.0,
-                    "Published"
-            );
+                    "Published");
             courseRepository.save(course2);
-            
+
             Course course3 = new Course(
                     "ts-mastery",
                     "Python Basics",
@@ -331,10 +330,9 @@ public class CourseService {
                     "$16.99",
                     189,
                     68.0,
-                    "Published"
-            );
+                    "Published");
             courseRepository.save(course3);
-            
+
             Course course4 = new Course(
                     "java-fundamentals",
                     "Node.js Backend Development",
@@ -348,10 +346,9 @@ public class CourseService {
                     "$11.99",
                     312,
                     71.0,
-                    "Published"
-            );
+                    "Published");
             courseRepository.save(course4);
-            
+
             Course course5 = new Course(
                     "fullstack-react-spring",
                     "Advanced TypeScript",
@@ -365,26 +362,25 @@ public class CourseService {
                     "$15.99",
                     0,
                     0.0,
-                    "Draft"
-            );
+                    "Draft");
             courseRepository.save(course5);
-            
+
             // Initialize sample videos for course1
-            Video video1 = new Video("Introduction to React", "Learn the basics of React", 
+            Video video1 = new Video("Introduction to React", "Learn the basics of React",
                     "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
                     "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1200&auto=format&fit=crop",
                     900, 1);
             video1.setCourse(course1);
             videoRepository.save(video1);
-            
-            Video video2 = new Video("Components and Props", "Understanding React components", 
+
+            Video video2 = new Video("Components and Props", "Understanding React components",
                     "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
                     "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1200&auto=format&fit=crop",
                     1200, 2);
             video2.setCourse(course1);
             videoRepository.save(video2);
-            
-            Video video3 = new Video("State and Lifecycle", "Managing state in React", 
+
+            Video video3 = new Video("State and Lifecycle", "Managing state in React",
                     "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
                     "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1200&auto=format&fit=crop",
                     1500, 3);
@@ -392,38 +388,38 @@ public class CourseService {
             videoRepository.save(video3);
         }
     }
-    
+
     @Transactional
     public Course updateCourse(String courseId, CreateCourseRequest request, Long instructorId) {
         // Find the course
         Course course = courseRepository.findById(courseId).orElse(null);
-        
+
         if (course == null || !course.getInstructorId().equals(instructorId)) {
             return null; // Course not found or not authorized
         }
-        
+
         // Update basic course information
         course.setTitle(request.getTitle());
         course.setDescription(request.getDescription());
         course.setRequirements(request.getRequirements());
         course.setWhatYouLearn(request.getWhatYouLearn());
-        
+
         // Update price if provided
         if (request.getPrice() != null && !request.getPrice().trim().isEmpty()) {
             course.setPrice(request.getPrice());
         }
-        
+
         // Update thumbnail if provided
         if (request.getThumbnailUrl() != null && !request.getThumbnailUrl().trim().isEmpty()) {
             course.setThumbnailUrl(request.getThumbnailUrl());
         }
-        
+
         // Update status
         if (request.getStatus() != null) {
             String status = request.getStatus().equalsIgnoreCase("published") ? "PUBLISHED" : "DRAFT";
             course.setStatus(status);
         }
-        
+
         // Update level if provided
         if (request.getLevel() != null) {
             String level = request.getLevel().toUpperCase();
@@ -431,83 +427,82 @@ public class CourseService {
                 course.setLevel(level);
             }
         }
-        
+
         // Update language if provided
         if (request.getLanguage() != null) {
             course.setLanguage(request.getLanguage());
         }
-        
+
         // Delete old sections and videos
         sectionRepository.deleteByCourseId(courseId);
-        
+
         // Create new sections and videos
         if (request.getSections() != null && !request.getSections().isEmpty()) {
             int totalVideos = 0;
             int totalDurationSeconds = 0;
-            
+
             for (CreateSectionRequest sectionReq : request.getSections()) {
                 Section section = new Section();
                 section.setCourseId(courseId);
                 section.setTitle(sectionReq.getTitle());
                 section.setDescription(sectionReq.getDescription());
                 section.setOrderIndex(sectionReq.getOrderIndex());
-                
+
                 Section savedSection = sectionRepository.save(section);
-                
+
                 if (sectionReq.getVideos() != null) {
                     for (CreateVideoRequest videoReq : sectionReq.getVideos()) {
                         Video video = new Video();
                         video.setSectionId(savedSection.getId());
                         video.setTitle(videoReq.getTitle());
-                        
+
                         String videoUrl = videoReq.getVideoUrl();
                         if (videoUrl == null || videoUrl.trim().isEmpty()) {
                             videoUrl = DEFAULT_VIDEO_URL;
                         }
                         video.setVideoUrl(videoUrl);
-                        
+
                         video.setDuration(videoReq.getDuration());
                         video.setOrderIndex(videoReq.getOrderIndex());
                         video.setContentType("VIDEO");
                         video.setIsPreview(false);
                         video.setIsFree(false);
                         video.setCourse(course);
-                        
+
                         videoRepository.save(video);
-                        
+
                         totalVideos++;
                         totalDurationSeconds += videoReq.getDuration();
                     }
                 }
             }
-            
+
             // Update lessons count and duration
             course.setLessons(totalVideos);
             course.setDuration(formatDuration(totalDurationSeconds));
         }
-        
+
         // Save and return updated course
         return courseRepository.save(course);
     }
-    
+
     @Transactional
     public boolean deleteCourse(String courseId, Long instructorId) {
         // Find the course
         Course course = courseRepository.findById(courseId).orElse(null);
-        
+
         if (course == null) {
             return false; // Course not found
         }
-        
+
         // Check if the instructor owns this course
         if (!course.getInstructorId().equals(instructorId)) {
             return false; // Not authorized to delete
         }
-        
+
         // Delete the course (sections and videos will be cascade deleted)
         courseRepository.deleteById(courseId);
-        
+
         return true;
     }
 }
-

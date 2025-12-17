@@ -24,10 +24,23 @@ export default function MyCoursesPage() {
     let isMounted = true
     api.get('/purchases')
       .then((res) => {
-        if (isMounted) setCourses(res || [])
+        if (isMounted) {
+          // Handle both array and null/undefined responses
+          if (Array.isArray(res)) {
+            setCourses(res)
+          } else {
+            setCourses([])
+          }
+        }
       })
       .catch((err) => {
-        if (isMounted) setError('Failed to load your courses')
+        console.error('Error loading courses:', err)
+        // If 401 or auth error, just show empty - user may not have purchased anything
+        if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+          if (isMounted) setCourses([])
+        } else {
+          if (isMounted) setError('Failed to load your courses')
+        }
       })
       .finally(() => {
         if (isMounted) setLoading(false)
