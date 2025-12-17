@@ -10,4 +10,6 @@ import java.util.List;
 public interface SectionRepository extends JpaRepository<Section, Long> {
 
     List<Section> findByCourseIdOrderByOrderIndexAsc(String courseId);
+
+    void deleteByCourseId(String courseId);
 }

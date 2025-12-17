@@ -1,79 +1,21 @@
-package com.codelearn.model;
+package com.codelearn.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-
-@Entity
-@Table(name = "courses")
-public class Course {
-
-    @Id
+public class CourseDetailResponse {
     private String id;
-
-    @Column(nullable = false)
     private String title;
-
     private String subtitle;
-
-    @Column(columnDefinition = "TEXT")
     private String description;
-
-    @Column(nullable = false)
     private String instructor;
-
-    // From feature/page-for-constructor - for instructor lookup
-    @Column(name = "instructor_id")
-    private Long instructorId;
-
     private String duration;
-
     private int lessons;
-
-    @Column(name = "thumbnail_url")
     private String thumbnailUrl;
-
-    @Column(name = "promo_video_url")
     private String promoVideoUrl;
-
     private double rating;
-
-    @Column(name = "num_ratings")
     private int numRatings;
-
-    @Column(nullable = false)
     private String price;
-
-    @Column(name = "discount_price")
     private String discountPrice;
-
-    @Column(nullable = false)
-    private String level = "ALL_LEVELS";
-
-    private String language = "English";
-
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @OrderBy("orderIndex ASC")
-    @JsonIgnore
-    private List<Section> sections = new ArrayList<>();
-
-    public Course() {
-    }
-
-    public Course(String id, String title, String instructor, String duration, int lessons,
-            String thumbnailUrl, double rating, int numRatings, String price) {
-        this.id = id;
-        this.title = title;
-        this.instructor = instructor;
-        this.duration = duration;
-        this.lessons = lessons;
-        this.thumbnailUrl = thumbnailUrl;
-        this.rating = rating;
-        this.numRatings = numRatings;
-        this.price = price;
-    }
+    private String level;
+    private String language;
 
     // Getters and Setters
     public String getId() {
@@ -114,14 +56,6 @@ public class Course {
 
     public void setInstructor(String instructor) {
         this.instructor = instructor;
-    }
-
-    public Long getInstructorId() {
-        return instructorId;
-    }
-
-    public void setInstructorId(Long instructorId) {
-        this.instructorId = instructorId;
     }
 
     public String getDuration() {
@@ -202,34 +136,5 @@ public class Course {
 
     public void setLanguage(String language) {
         this.language = language;
-    }
-
-    public List<Section> getSections() {
-        return sections;
-    }
-
-    public void setSections(List<Section> sections) {
-        this.sections = sections;
-    }
-
-    public void addSection(Section section) {
-        sections.add(section);
-        section.setCourse(this);
-    }
-
-    /**
-     * Parse price string to BigDecimal
-     * Handles formats like "$14.99", "14.99", "Free"
-     */
-    public BigDecimal getPriceAsDecimal() {
-        if (price == null || price.equalsIgnoreCase("Free")) {
-            return BigDecimal.ZERO;
-        }
-        String cleaned = price.replaceAll("[^\\d.]", "");
-        try {
-            return new BigDecimal(cleaned);
-        } catch (NumberFormatException e) {
-            return BigDecimal.ZERO;
-        }
     }
 }

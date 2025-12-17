@@ -31,6 +31,10 @@ public class Video {
     @Column(name = "is_free_preview")
     private boolean isFreePreview = false;
 
+    // For direct course lookup (from feature/page-for-constructor)
+    @Column(name = "course_id")
+    private String courseId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "section_id", nullable = false)
     @JsonIgnore
@@ -117,6 +121,14 @@ public class Video {
 
     public void setSection(Section section) {
         this.section = section;
+    }
+
+    public String getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(String courseId) {
+        this.courseId = courseId;
     }
 
     // Helper method to get duration formatted

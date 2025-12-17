@@ -33,15 +33,30 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/courses/**").permitAll()
+                // Course read endpoints - public
+                .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/video-previews/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/my-learning").permitAll()
+                // Instructor endpoints - handle auth internally via JwtUtil
+                .requestMatchers(HttpMethod.GET, "/api/courses/instructor/my-courses").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/quizzes/instructor/my-quizzes").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/quizzes/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/courses").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/quizzes").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/courses/*").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/quizzes/*").permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/api/courses/*").permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/api/quizzes/*").permitAll()
+                .requestMatchers("/api/purchases/**").permitAll()
+                .requestMatchers("/api/videos/upload").permitAll()
+                .requestMatchers("/api/instructor/profile").permitAll()
                 // Payment endpoints - handle auth internally via SecurityUtils
                 .requestMatchers(HttpMethod.POST, "/api/payments/**").permitAll()
                 // Lesson endpoints - handle auth internally via SecurityUtils
                 .requestMatchers("/api/courses/*/lessons").permitAll()
                 .requestMatchers("/api/courses/*/check-access").permitAll()
                 .requestMatchers("/api/courses/*/progress").permitAll()
+                .requestMatchers("/api/courses/*/videos").permitAll()
                 .anyRequest().authenticated());
 
         // Return 401 for unauthenticated API requests instead of redirecting to a login
