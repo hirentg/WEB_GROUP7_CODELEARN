@@ -7,6 +7,8 @@ import CheckoutPage from './pages/CheckoutPage'
 import QuizTakePage from './pages/QuizTakePage'
 import MyCoursesPage from './pages/MyCoursesPage'
 import CartPage from './pages/CartPage'
+import ProfilePage from './pages/ProfilePage'
+import SearchPage from './pages/SearchPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import InstructorPage from './pages/InstructorPage'
@@ -27,6 +29,7 @@ export default function App() {
       <Layout.Content style={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/course/:id" element={<CourseDetailsPage />} />
 
           {/* Instructor routes - only accessible by INSTRUCTOR role */}
@@ -95,6 +98,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CartPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

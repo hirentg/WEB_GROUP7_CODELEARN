@@ -17,6 +17,14 @@ export default function Navbar() {
   const [cartCount, setCartCount] = useState(0)
   const [loadingNotifications, setLoadingNotifications] = useState(false)
   const [notificationOpen, setNotificationOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const handleSearch = (value) => {
+    if (value?.trim()) {
+      navigate(`/search?q=${encodeURIComponent(value.trim())}`)
+      setSearchQuery('')
+    }
+  }
 
   // Fetch unread count and cart count periodically
   useEffect(() => {
@@ -188,6 +196,12 @@ export default function Navbar() {
 
   const userMenu = [
     {
+      key: 'profile',
+      label: 'My Profile',
+      icon: <UserOutlined />,
+      onClick: () => navigate('/profile')
+    },
+    {
       key: 'learning',
       label: 'My Learning',
       icon: <BookOutlined />,
@@ -228,8 +242,11 @@ export default function Navbar() {
         <div style={{ flex: 1, maxWidth: '480px', margin: '0 48px' }}>
           <Input
             size="large"
-            placeholder="Search for anything..."
+            placeholder="Search for courses..."
             prefix={<SearchOutlined style={{ color: 'var(--text-muted)' }} />}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onPressEnter={(e) => handleSearch(e.target.value)}
             style={{
               borderRadius: '999px',
               border: '1px solid var(--border-color)',

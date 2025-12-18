@@ -70,6 +70,12 @@ public class SecurityConfig {
                 // Purchase endpoints
                 .requestMatchers("/api/purchases/check/**").permitAll() // Check access can be public
                 .requestMatchers("/api/purchases/**").authenticated()
+                // Rating endpoints
+                .requestMatchers(HttpMethod.GET, "/api/ratings/course/**").permitAll() // Public course reviews
+                .requestMatchers("/api/ratings/**").authenticated()
+                // User profile endpoints
+                .requestMatchers(HttpMethod.GET, "/api/users/*/public").permitAll() // Public profiles
+                .requestMatchers("/api/users/**").authenticated()
                 // Other authenticated endpoints
                 .requestMatchers("/api/videos/upload").authenticated()
                 .requestMatchers("/api/instructor/profile").authenticated()
