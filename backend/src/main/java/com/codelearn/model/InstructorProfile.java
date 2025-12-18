@@ -1,6 +1,8 @@
 package com.codelearn.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 
 @Entity
@@ -29,6 +31,7 @@ public class InstructorProfile {
     @Column(name = "avg_rating", nullable = false)
     private Double avgRating = 0.0;
     
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payout_info", columnDefinition = "json")
     private String payoutInfo;
     

@@ -2,17 +2,31 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
 async function request(method, path, body) {
   const token = localStorage.getItem('cl_token')
-  const headers = { 'Content-Type': 'application/json' }
+  const headers = {}
+
+  // Check if body is FormData - don't set Content-Type (browser will set it with boundary)
+  const isFormData = body instanceof FormData
+
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json'
+  }
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const options = {
     method,
     headers,
-    body: body ? JSON.stringify(body) : undefined,
     credentials: 'include'
-  })
+  }
+
+  // Only stringify non-FormData bodies
+  if (body) {
+    options.body = isFormData ? body : JSON.stringify(body)
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, options)
 
   if (!res.ok) {
     if (res.status === 404) return null

@@ -27,15 +27,26 @@ public class InstructorProfileController {
             Long userId = jwtUtil.getUserIdFromToken(authHeader);
             
             if (userId == null) {
+                System.out.println("ERROR: User ID is null from token");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
             
+            System.out.println("Fetching profile for user ID: " + userId);
             InstructorProfileResponse profile = instructorProfileService.getInstructorProfile(userId);
+            
+            if (profile == null) {
+                System.out.println("ERROR: Profile is null for user ID: " + userId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            
+            System.out.println("Profile fetched successfully for user: " + profile.getName());
             return ResponseEntity.ok(profile);
         } catch (RuntimeException e) {
+            System.err.println("Runtime exception in getProfile: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
+            System.err.println("Exception in getProfile: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

@@ -30,6 +30,10 @@ public class Course {
     private String duration;
     private int lessons;
     private String thumbnailUrl;
+    
+    @Column(name = "promo_video_url")
+    private String promoVideoUrl;
+    
     private double rating;
     private int numRatings;
     private String price;
@@ -99,6 +103,8 @@ public class Course {
     public void setLessons(int lessons) { this.lessons = lessons; }
     public String getThumbnailUrl() { return thumbnailUrl; }
     public void setThumbnailUrl(String thumbnailUrl) { this.thumbnailUrl = thumbnailUrl; }
+    public String getPromoVideoUrl() { return promoVideoUrl; }
+    public void setPromoVideoUrl(String promoVideoUrl) { this.promoVideoUrl = promoVideoUrl; }
     public double getRating() { return rating; }
     public void setRating(double rating) { this.rating = rating; }
     public int getNumRatings() { return numRatings; }

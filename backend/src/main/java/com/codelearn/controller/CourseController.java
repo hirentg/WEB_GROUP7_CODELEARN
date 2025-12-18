@@ -7,12 +7,23 @@ import com.codelearn.model.Video;
 import com.codelearn.service.CourseService;
 import com.codelearn.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(path = "/api/courses", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -23,6 +34,9 @@ public class CourseController {
     
     @Autowired
     private JwtUtil jwtUtil;
+    
+    @Value("${thumbnail.storage.path:uploads/thumbnails/courses}")
+    private String thumbnailStoragePath;
 
     @GetMapping
     public List<Course> getCourses() {
@@ -132,6 +146,78 @@ public class CourseController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("{\"error\": \"Failed to delete course\"}");
+        }
+    }
+    
+    @PostMapping(value = "/upload-thumbnail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadThumbnail(
+            @RequestParam("file") MultipartFile file,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            // Verify authentication
+            Long instructorId = jwtUtil.getUserIdFromToken(authHeader);
+            if (instructorId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Unauthorized"));
+            }
+            
+            // Validate file
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Please select a file to upload"));
+            }
+            
+            // Validate file type
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Invalid file type. Only image files are allowed."));
+            }
+            
+            // Validate file size (max 5MB)
+            long maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            if (file.getSize() > maxSize) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "File size exceeds maximum limit of 5MB"));
+            }
+            
+            // Get file extension
+            String originalFilename = file.getOriginalFilename();
+            String fileExtension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            
+            // Generate unique filename
+            String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
+            
+            // Create upload directory if it doesn't exist
+            Path uploadPath = Paths.get(thumbnailStoragePath);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+            
+            // Save file
+            Path filePath = uploadPath.resolve(uniqueFilename);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            
+            // Generate URL (adjust this based on your server configuration)
+            String fileUrl = "/" + thumbnailStoragePath + "/" + uniqueFilename;
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("url", fileUrl);
+            response.put("filename", uniqueFilename);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to upload file: " + e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An error occurred: " + e.getMessage()));
         }
     }
 }

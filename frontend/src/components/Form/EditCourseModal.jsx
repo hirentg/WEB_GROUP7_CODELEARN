@@ -33,6 +33,7 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
           requirements: courseDetails.requirements,
           what_you_learn: courseDetails.whatYouLearn,
           price: courseDetails.price,
+          promo_video_url: courseDetails.promoVideoUrl || '',
         })
         
         setCourseData({
@@ -41,6 +42,7 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
           requirements: courseDetails.requirements,
           what_you_learn: courseDetails.whatYouLearn,
           price: courseDetails.price,
+          promo_video_url: courseDetails.promoVideoUrl || '',
         })
 
         // Load sections with videos from API
@@ -69,7 +71,7 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
   const handleNext = async () => {
     if (currentStep === 0) {
       try {
-        const values = await form.validateFields(['title', 'description', 'requirements', 'what_you_learn', 'price'])
+        const values = await form.validateFields(['title', 'description', 'requirements', 'what_you_learn', 'price', 'promo_video_url'])
         setCourseData({ ...courseData, ...values })
         setCurrentStep(1)
       } catch (error) {
@@ -84,15 +86,44 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
     setCurrentStep(currentStep - 1)
   }
 
+  const uploadThumbnail = async () => {
+    if (fileList.length === 0) {
+      console.log('No file to upload, using existing thumbnail')
+      return course.thumbnailUrl || ''
+    }
+
+    console.log('Uploading thumbnail, fileList:', fileList)
+    
+    const formData = new FormData()
+    // Ant Design Upload wraps files in an object, get the originFileObj
+    const file = fileList[0].originFileObj || fileList[0]
+    console.log('File to upload:', file)
+    formData.append('file', file)
+
+    try {
+      const response = await api.post('/courses/upload-thumbnail', formData)
+      console.log('Upload response:', response)
+      return response.url || course.thumbnailUrl || ''
+    } catch (error) {
+      console.error('Error uploading thumbnail:', error)
+      message.error('Failed to upload thumbnail')
+      return course.thumbnailUrl || ''
+    }
+  }
+
   const handleSaveDraft = async () => {
     try {
+      // Upload thumbnail first if there's a new file
+      const thumbnailUrl = await uploadThumbnail()
+      
       const payload = {
         title: courseData.title,
         description: courseData.description,
         requirements: courseData.requirements,
         whatYouLearn: courseData.what_you_learn,
         price: courseData.price,
-        thumbnailUrl: fileList.length > 0 ? URL.createObjectURL(fileList[0]) : course.thumbnailUrl,
+        thumbnailUrl: thumbnailUrl,
+        promoVideoUrl: courseData.promo_video_url || '',
         status: 'draft',
         sections: sections.map((section, idx) => ({
           title: section.title,
@@ -119,13 +150,17 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
     try {
       await form.validateFields(['confirmOriginal', 'confirmReviewed'])
       
+      // Upload thumbnail first if there's a new file
+      const thumbnailUrl = await uploadThumbnail()
+      
       const payload = {
         title: courseData.title,
         description: courseData.description,
         requirements: courseData.requirements,
         whatYouLearn: courseData.what_you_learn,
         price: courseData.price,
-        thumbnailUrl: fileList.length > 0 ? URL.createObjectURL(fileList[0]) : course.thumbnailUrl,
+        thumbnailUrl: thumbnailUrl,
+        promoVideoUrl: courseData.promo_video_url || '',
         status: 'published',
         sections: sections.map((section, idx) => ({
           title: section.title,
@@ -328,6 +363,19 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
             >
               <Input
                 placeholder="e.g., $99.99 or Free"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="promo_video_url"
+              label="Promo Video URL"
+              rules={[
+                { type: 'url', message: 'Please enter a valid URL' }
+              ]}
+            >
+              <Input
+                placeholder="e.g., https://www.youtube.com/watch?v=..."
                 size="large"
               />
             </Form.Item>

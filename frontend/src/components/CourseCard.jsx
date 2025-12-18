@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Card, Rate, Typography, Space, Tag } from 'antd'
+import { getImageUrl } from '../utils/imageHelper'
 
 const { Text, Title } = Typography
 
@@ -21,7 +22,7 @@ export default function CourseCard({ course }) {
         <div
           style={{
             height: '160px',
-            backgroundImage: `url(${course.thumbnailUrl || 'https://placehold.co/600x400/e2e8f0/94a3b8?text=Course'})`,
+            backgroundImage: `url(${getImageUrl(course.thumbnailUrl) || 'https://placehold.co/600x400/e2e8f0/94a3b8?text=Course'})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             position: 'relative'

@@ -16,7 +16,7 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
   const handleNext = async () => {
     if (currentStep === 0) {
       try {
-        const values = await form.validateFields(['title', 'description', 'requirements', 'what_you_learn', 'price'])
+        const values = await form.validateFields(['title', 'description', 'requirements', 'what_you_learn', 'price', 'promo_video_url'])
         setCourseData({ ...courseData, ...values })
         setCurrentStep(1)
       } catch (error) {
@@ -31,16 +31,45 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
     setCurrentStep(currentStep - 1)
   }
 
+  const uploadThumbnail = async () => {
+    if (fileList.length === 0) {
+      console.log('No file to upload')
+      return ''
+    }
+
+    console.log('Uploading thumbnail, fileList:', fileList)
+    
+    const formData = new FormData()
+    // Ant Design Upload wraps files in an object, get the originFileObj
+    const file = fileList[0].originFileObj || fileList[0]
+    console.log('File to upload:', file)
+    formData.append('file', file)
+
+    try {
+      const response = await api.post('/courses/upload-thumbnail', formData)
+      console.log('Upload response:', response)
+      return response.url || ''
+    } catch (error) {
+      console.error('Error uploading thumbnail:', error)
+      message.error('Failed to upload thumbnail')
+      return ''
+    }
+  }
+
   const handleSaveDraft = async () => {
     setLoading(true)
     try {
+      // Upload thumbnail first if there's a file
+      const thumbnailUrl = await uploadThumbnail()
+      
       const payload = {
         title: courseData.title,
         description: courseData.description,
         requirements: courseData.requirements,
         whatYouLearn: courseData.what_you_learn,
         price: courseData.price,
-        thumbnailUrl: fileList.length > 0 ? URL.createObjectURL(fileList[0]) : '',
+        thumbnailUrl: thumbnailUrl,
+        promoVideoUrl: courseData.promo_video_url || '',
         status: 'draft',
         sections: sections.map((section, idx) => ({
           title: section.title,
@@ -75,13 +104,17 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
       await form.validateFields(['confirmOriginal', 'confirmReviewed'])
       setLoading(true)
       
+      // Upload thumbnail first if there's a file
+      const thumbnailUrl = await uploadThumbnail()
+      
       const payload = {
         title: courseData.title,
         description: courseData.description,
         requirements: courseData.requirements,
         whatYouLearn: courseData.what_you_learn,
         price: courseData.price,
-        thumbnailUrl: fileList.length > 0 ? URL.createObjectURL(fileList[0]) : '',
+        thumbnailUrl: thumbnailUrl,
+        promoVideoUrl: courseData.promo_video_url || '',
         status: 'published',
         sections: sections.map((section, idx) => ({
           title: section.title,
@@ -287,6 +320,19 @@ const CreateCourseModal = ({ onClose, onSubmit }) => {
             >
               <Input
                 placeholder="e.g., $99.99 or Free"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="promo_video_url"
+              label="Promo Video URL"
+              rules={[
+                { type: 'url', message: 'Please enter a valid URL' }
+              ]}
+            >
+              <Input
+                placeholder="e.g., https://www.youtube.com/watch?v=..."
                 size="large"
               />
             </Form.Item>
