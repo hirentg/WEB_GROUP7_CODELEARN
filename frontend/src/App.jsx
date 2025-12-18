@@ -6,6 +6,7 @@ import CourseLearnPage from './pages/CourseLearnPage'
 import CheckoutPage from './pages/CheckoutPage'
 import QuizTakePage from './pages/QuizTakePage'
 import MyCoursesPage from './pages/MyCoursesPage'
+import CartPage from './pages/CartPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import InstructorPage from './pages/InstructorPage'
@@ -86,6 +87,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <QuizTakePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <CartPage />
               </ProtectedRoute>
             }
           />
