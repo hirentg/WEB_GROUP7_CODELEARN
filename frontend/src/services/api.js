@@ -49,7 +49,14 @@ export const api = {
   get: (path) => request('GET', path),
   post: (path, body) => request('POST', path, body),
   put: (path, body) => request('PUT', path, body),
-  delete: (path) => request('DELETE', path)
+  delete: (path) => request('DELETE', path),
+
+  // Instructor stats
+  getInstructorStats: () => request('GET', '/instructor/profile/stats'),
+  getInstructorEnrollmentTrend: () => request('GET', '/instructor/profile/enrollment-trend'),
+  getInstructorCoursePerformance: () => request('GET', '/instructor/profile/course-performance'),
+  getStudentProgressDistribution: () => request('GET', '/instructor/profile/student-progress-distribution'),
+  getDetailedCourseStats: () => request('GET', '/instructor/profile/detailed-course-stats'),
 }
 
 
