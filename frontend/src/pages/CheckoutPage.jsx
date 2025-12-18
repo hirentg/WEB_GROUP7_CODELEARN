@@ -4,6 +4,7 @@ import { Row, Col, Typography, Card, Button, Radio, Form, Input, Spin, Alert, Sp
 import { CreditCardOutlined, PayCircleOutlined, LockOutlined, SafetyOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { getImageUrl } from '../utils/imageHelper'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -264,7 +265,7 @@ export default function CheckoutPage() {
 
                             <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
                                 <img
-                                    src={course.thumbnailUrl}
+                                    src={getImageUrl(course.thumbnailUrl) || 'https://via.placeholder.com/100x60'}
                                     alt={course.title}
                                     style={{ width: '100px', height: '60px', objectFit: 'cover', borderRadius: '4px' }}
                                 />

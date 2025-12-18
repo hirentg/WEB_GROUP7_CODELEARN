@@ -11,6 +11,7 @@ public class CourseDetailResponse {
     private String duration;
     private Integer lessons;
     private String thumbnailUrl;
+    private String promoVideoUrl;
     private Double rating;
     private Integer numRatings;
     private String price;
@@ -119,6 +120,9 @@ public class CourseDetailResponse {
     
     public String getThumbnailUrl() { return thumbnailUrl; }
     public void setThumbnailUrl(String thumbnailUrl) { this.thumbnailUrl = thumbnailUrl; }
+    
+    public String getPromoVideoUrl() { return promoVideoUrl; }
+    public void setPromoVideoUrl(String promoVideoUrl) { this.promoVideoUrl = promoVideoUrl; }
     
     public Double getRating() { return rating; }
     public void setRating(Double rating) { this.rating = rating; }

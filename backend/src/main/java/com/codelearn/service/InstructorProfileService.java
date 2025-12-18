@@ -22,23 +22,33 @@ public class InstructorProfileService {
     private InstructorProfileRepository instructorProfileRepository;
     
     public InstructorProfileResponse getInstructorProfile(Long userId) {
+        System.out.println("=== Getting instructor profile for user ID: " + userId);
+        
         // Get user
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
-            throw new RuntimeException("User not found");
+            System.err.println("ERROR: User not found with ID: " + userId);
+            throw new RuntimeException("User not found with ID: " + userId);
         }
+        
+        System.out.println("User found: " + user.getName() + " (email: " + user.getEmail() + ")");
         
         // Get or create instructor profile
         InstructorProfile profile = instructorProfileRepository.findByUserId(userId)
             .orElseGet(() -> {
+                System.out.println("Instructor profile not found, creating new one for user ID: " + userId);
                 InstructorProfile newProfile = new InstructorProfile();
                 newProfile.setUserId(userId);
                 newProfile.setTotalStudents(0);
                 newProfile.setTotalCourses(0);
                 newProfile.setAvgRating(0.0);
                 newProfile.setIsVerified(false);
-                return instructorProfileRepository.save(newProfile);
+                InstructorProfile saved = instructorProfileRepository.save(newProfile);
+                System.out.println("New instructor profile created with ID: " + saved.getId());
+                return saved;
             });
+        
+        System.out.println("Instructor profile found/created with ID: " + profile.getId());
         
         return new InstructorProfileResponse(
             user.getId(),

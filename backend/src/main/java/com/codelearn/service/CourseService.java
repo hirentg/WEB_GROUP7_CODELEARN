@@ -22,8 +22,8 @@ import java.util.stream.Collectors;
 public class CourseService {
 
     private static final String DEFAULT_THUMBNAIL = "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&q=80";
-    private static final String DEFAULT_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Default video
-                                                                                                   // placeholder
+    private static final String DEFAULT_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Default video placeholder
+    private static final String DEFAULT_PROMO_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Default promo video
 
     @Autowired
     private CourseRepository courseRepository;
@@ -34,8 +34,11 @@ public class CourseService {
     @Autowired
     private VideoRepository videoRepository;
 
+    /**
+     * Get all courses for students/public view
+     * Only returns PUBLISHED courses
+     */
     public List<Course> getAllCourses() {
-        // Only return PUBLISHED courses for public view (students)
         List<Course> courses = courseRepository.findByStatusIgnoreCase("PUBLISHED");
         // Tính completion cho từng khóa học
         courses.forEach(course -> {
@@ -45,6 +48,10 @@ public class CourseService {
         return courses;
     }
 
+    /**
+     * Get all courses for a specific instructor
+     * Returns ALL courses (both DRAFT and PUBLISHED) for instructor management
+     */
     public List<Course> getInstructorCourses(Long instructorId) {
         List<Course> courses = courseRepository.findByInstructorId(instructorId);
         // Tính completion cho từng khóa học
@@ -109,6 +116,7 @@ public class CourseService {
         response.setDuration(course.getDuration());
         response.setLessons(course.getLessons());
         response.setThumbnailUrl(course.getThumbnailUrl());
+        response.setPromoVideoUrl(course.getPromoVideoUrl());
         response.setRating(course.getRating());
         response.setNumRatings(course.getNumRatings());
         response.setPrice(course.getPrice());
@@ -139,6 +147,12 @@ public class CourseService {
         String thumbnailUrl = request.getThumbnailUrl();
         if (thumbnailUrl == null || thumbnailUrl.trim().isEmpty()) {
             thumbnailUrl = DEFAULT_THUMBNAIL;
+        }
+        
+        // Use default promo video URL if not provided
+        String promoVideoUrl = request.getPromoVideoUrl();
+        if (promoVideoUrl == null || promoVideoUrl.trim().isEmpty()) {
+            promoVideoUrl = DEFAULT_PROMO_VIDEO_URL;
         }
 
         // Set default values if not provided
@@ -195,6 +209,9 @@ public class CourseService {
         if (request.getCategoryId() != null) {
             course.setCategoryId(request.getCategoryId());
         }
+        
+        // Set promo video URL
+        course.setPromoVideoUrl(promoVideoUrl);
 
         // Set additional fields
         if (request.getRequirements() != null) {
@@ -412,6 +429,11 @@ public class CourseService {
         // Update thumbnail if provided
         if (request.getThumbnailUrl() != null && !request.getThumbnailUrl().trim().isEmpty()) {
             course.setThumbnailUrl(request.getThumbnailUrl());
+        }
+        
+        // Update promo video URL if provided
+        if (request.getPromoVideoUrl() != null && !request.getPromoVideoUrl().trim().isEmpty()) {
+            course.setPromoVideoUrl(request.getPromoVideoUrl());
         }
 
         // Update status

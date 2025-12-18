@@ -50,6 +50,13 @@ const ProfileSettings = () => {
       setLoading(true)
       const data = await api.get('/instructor/profile')
       
+      if (!data) {
+        console.error('No data returned from API')
+        message.error('Failed to load profile: No data returned')
+        setLoading(false)
+        return
+      }
+      
       setFormData({
         name: data.name || '',
         email: data.email || '',

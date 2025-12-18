@@ -40,9 +40,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/error").permitAll() // Allow error page access
+                .requestMatchers("/uploads/**").permitAll() // Allow access to uploaded files
                 // More specific patterns FIRST (before /api/courses/**)
                 .requestMatchers(HttpMethod.GET, "/api/courses/instructor/my-courses").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/courses").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/courses/upload-thumbnail").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/courses/*").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/courses/*").authenticated()
                 // Then allow public GET access to courses

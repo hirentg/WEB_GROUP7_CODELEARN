@@ -8,6 +8,7 @@ public class CreateCourseRequest {
     private String requirements;
     private String whatYouLearn;
     private String thumbnailUrl;
+    private String promoVideoUrl;
     private String price;
     private String duration;
     private Integer lessons;
@@ -57,6 +58,14 @@ public class CreateCourseRequest {
 
     public void setThumbnailUrl(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
+    }
+
+    public String getPromoVideoUrl() {
+        return promoVideoUrl;
+    }
+
+    public void setPromoVideoUrl(String promoVideoUrl) {
+        this.promoVideoUrl = promoVideoUrl;
     }
 
     public String getPrice() {

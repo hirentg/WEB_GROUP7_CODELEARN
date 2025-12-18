@@ -2,7 +2,9 @@ package com.codelearn.service;
 
 // Reverted: placeholder to neutralize previously added UserService
 import com.codelearn.model.User;
+import com.codelearn.model.InstructorProfile;
 import com.codelearn.repository.UserRepository;
+import com.codelearn.repository.InstructorProfileRepository;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,9 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private InstructorProfileRepository instructorProfileRepository;
 
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
@@ -37,7 +42,21 @@ public class UserService {
         user.setEmail(email);
         user.setRole(role);
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        
+        // Tự động tạo instructor_profile nếu role là INSTRUCTOR
+        if ("INSTRUCTOR".equalsIgnoreCase(role)) {
+            InstructorProfile profile = new InstructorProfile();
+            profile.setUserId(savedUser.getId());
+            profile.setTotalStudents(0);
+            profile.setTotalCourses(0);
+            profile.setAvgRating(0.0);
+            profile.setIsVerified(false);
+            instructorProfileRepository.save(profile);
+            System.out.println("✅ Auto-created instructor_profile for user ID: " + savedUser.getId());
+        }
+
+        return savedUser;
     }
 
     public User findByName(String username) {

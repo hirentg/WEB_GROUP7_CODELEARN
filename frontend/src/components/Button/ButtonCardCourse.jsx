@@ -1,6 +1,7 @@
 import React from 'react'
 import { Card, Button } from 'antd'
 import { EditOutlined, DeleteOutlined, UserOutlined, LineChartOutlined } from '@ant-design/icons'
+import { getImageUrl } from '../../utils/imageHelper'
 
 const ButtonCardCourse = ({ 
   image, 
@@ -27,7 +28,7 @@ const ButtonCardCourse = ({
         <div style={{ position: 'relative', height: 200, overflow: 'hidden' }}>
           <img
             alt={title}
-            src={image}
+            src={getImageUrl(image) || 'https://via.placeholder.com/400x200'}
             style={{ 
               width: '100%', 
               height: '100%', 
