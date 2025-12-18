@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Row, Col, Typography, Rate, Button, Card, Spin, Alert, List, Space, Breadcrumb, Divider, Tag, message } from 'antd'
-import { PlayCircleOutlined, CheckCircleOutlined, GlobalOutlined, ClockCircleOutlined, FileTextOutlined, UserOutlined, PlayCircleFilled, CheckCircleFilled } from '@ant-design/icons'
+import { PlayCircleOutlined, CheckCircleOutlined, GlobalOutlined, ClockCircleOutlined, FileTextOutlined, UserOutlined, PlayCircleFilled, CheckCircleFilled, ShoppingCartOutlined } from '@ant-design/icons'
 import { api } from '../services/api'
+import cartApi from '../services/cartApi'
 import { useAuth } from '../context/AuthContext'
 
 const { Title, Paragraph, Text } = Typography
@@ -15,6 +16,7 @@ export default function CourseDetailsPage() {
   const [isPurchased, setIsPurchased] = useState(false)
   const [loading, setLoading] = useState(true)
   const [purchasing, setPurchasing] = useState(false)
+  const [addingToCart, setAddingToCart] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -42,6 +44,24 @@ export default function CourseDetailsPage() {
     }
     // Navigate to checkout page instead of direct purchase
     navigate(`/checkout/${id}`)
+  }
+
+  const handleAddToCart = async () => {
+    if (!user) {
+      localStorage.setItem('redirectAfterLogin', `/course/${id}`)
+      navigate('/login')
+      return
+    }
+    setAddingToCart(true)
+    try {
+      await cartApi.addToCart(id)
+      message.success('Course added to cart!')
+    } catch (err) {
+      const errorMsg = err?.response?.data?.error || 'Failed to add to cart'
+      message.error(errorMsg)
+    } finally {
+      setAddingToCart(false)
+    }
   }
 
   const curriculum = [
@@ -239,7 +259,9 @@ export default function CourseDetailsPage() {
                           size="large"
                           block
                           style={{ height: '48px', fontSize: '16px', fontWeight: 700 }}
-                          onClick={() => navigate('/login')}
+                          icon={<ShoppingCartOutlined />}
+                          onClick={handleAddToCart}
+                          loading={addingToCart}
                         >
                           Add to Cart
                         </Button>

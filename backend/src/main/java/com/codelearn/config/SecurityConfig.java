@@ -50,12 +50,23 @@ public class SecurityConfig {
                 // Then allow public GET access to courses
                 .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/videos/*/stream").permitAll()
-                // Quiz endpoints
+                // Quiz endpoints - specific patterns first
                 .requestMatchers(HttpMethod.GET, "/api/quizzes/instructor/my-quizzes").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/quizzes/course/*").authenticated() // Course quizzes for students
+                .requestMatchers(HttpMethod.GET, "/api/quizzes/take/*").authenticated() // Quiz taking for students
                 .requestMatchers(HttpMethod.GET, "/api/quizzes/*").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/quizzes").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/quizzes/*").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/quizzes/*").authenticated()
+                // Question endpoints
+                .requestMatchers(HttpMethod.GET, "/api/questions/video/*").authenticated() // Q&A for students
+                .requestMatchers(HttpMethod.GET, "/api/questions/instructor/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/questions").authenticated() // Students ask questions
+                .requestMatchers(HttpMethod.POST, "/api/questions/answers").authenticated()
+                // Notification endpoints
+                .requestMatchers("/api/notifications/**").authenticated()
+                // Cart endpoints
+                .requestMatchers("/api/cart/**").authenticated()
                 // Purchase endpoints
                 .requestMatchers("/api/purchases/check/**").permitAll() // Check access can be public
                 .requestMatchers("/api/purchases/**").authenticated()

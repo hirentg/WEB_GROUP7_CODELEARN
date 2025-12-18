@@ -26,7 +26,8 @@ export default function QuizTakePage() {
             return
         }
 
-        api.get(`/quizzes/${id}`)
+        // Use the student-facing quiz endpoint (not instructor endpoint)
+        api.get(`/quizzes/take/${id}`)
             .then((data) => setQuiz(data))
             .catch(() => setError('Failed to load quiz'))
             .finally(() => setLoading(false))
@@ -138,7 +139,7 @@ export default function QuizTakePage() {
                         <Text type="secondary">Question {currentQuestion + 1} of {questions.length}</Text>
                     </div>
 
-                    <Title level={4}>{currentQ?.text || currentQ?.question}</Title>
+                    <Title level={4}>{currentQ?.questionText || currentQ?.text || currentQ?.question}</Title>
 
                     <Radio.Group
                         value={selectedAnswers[currentQuestion]}
@@ -159,7 +160,7 @@ export default function QuizTakePage() {
                                         lineHeight: '1.5'
                                     }}
                                 >
-                                    {option.text || option}
+                                    {option.optionText || option.text || option}
                                 </Radio.Button>
                             ))}
                         </Space>
