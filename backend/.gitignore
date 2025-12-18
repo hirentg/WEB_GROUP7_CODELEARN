@@ -1,4 +1,0 @@
-# Video uploads (don't commit video files to git)
-uploads/
-!uploads/.gitkeep
-
