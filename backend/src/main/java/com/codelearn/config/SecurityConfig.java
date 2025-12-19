@@ -11,99 +11,111 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
+
 import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CorsConfigurationSource corsConfigurationSource;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    // 👇 inject CorsConfigurationSource
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            CorsConfigurationSource corsConfigurationSource
+    ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.corsConfigurationSource = corsConfigurationSource;
     }
 
-    // Cấu hình các quyền truy cập và bảo mật cho các URL
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Enable CORS support for the security filter chain
-        http.cors(cors -> {
-        });
 
-        // Disable CSRF for API usage and use stateless session management for
-        // token-based auth
+        // ✅ CORS: BẮT BUỘC gắn source vào Spring Security
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource));
+
+        // Disable CSRF for API usage and use stateless session management
         http.csrf(csrf -> csrf.disable());
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        // Allow unauthenticated access to the REST auth endpoints and CORS preflight
-        // IMPORTANT: More specific rules must come BEFORE wildcard rules
+        // Authorization rules
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/error").permitAll() // Allow error page access
-                .requestMatchers("/uploads/**").permitAll() // Allow access to uploaded files
-                // More specific patterns FIRST (before /api/courses/**)
+                .requestMatchers("/error").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
+
+                // Courses
                 .requestMatchers(HttpMethod.GET, "/api/courses/instructor/my-courses").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/courses").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/courses/upload-thumbnail").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/courses/*").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/courses/*").authenticated()
-                // Then allow public GET access to courses
                 .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
+
+                // Videos
                 .requestMatchers(HttpMethod.GET, "/api/videos/*/stream").permitAll()
-                // Quiz endpoints - specific patterns first
+                .requestMatchers("/api/videos/upload").authenticated()
+
+                // Quizzes
                 .requestMatchers(HttpMethod.GET, "/api/quizzes/instructor/my-quizzes").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/quizzes/course/*").authenticated() // Course quizzes for students
-                .requestMatchers(HttpMethod.GET, "/api/quizzes/take/*").authenticated() // Quiz taking for students
+                .requestMatchers(HttpMethod.GET, "/api/quizzes/course/*").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/quizzes/take/*").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/quizzes/*").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/quizzes").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/quizzes/*").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/quizzes/*").authenticated()
-                // Question endpoints
-                .requestMatchers(HttpMethod.GET, "/api/questions/video/*").authenticated() // Q&A for students
+
+                // Questions
+                .requestMatchers(HttpMethod.GET, "/api/questions/video/*").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/questions/instructor/**").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/questions").authenticated() // Students ask questions
+                .requestMatchers(HttpMethod.POST, "/api/questions").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/questions/answers").authenticated()
-                // Notification endpoints
+
+                // Notifications / Cart / Purchases
                 .requestMatchers("/api/notifications/**").authenticated()
-                // Cart endpoints
                 .requestMatchers("/api/cart/**").authenticated()
-                // Purchase endpoints
-                .requestMatchers("/api/purchases/check/**").permitAll() // Check access can be public
+                .requestMatchers("/api/purchases/check/**").permitAll()
                 .requestMatchers("/api/purchases/**").authenticated()
-                // Rating endpoints
-                .requestMatchers(HttpMethod.GET, "/api/ratings/course/**").permitAll() // Public course reviews
+
+                // Ratings
+                .requestMatchers(HttpMethod.GET, "/api/ratings/course/**").permitAll()
                 .requestMatchers("/api/ratings/**").authenticated()
-                // User profile endpoints
-                .requestMatchers(HttpMethod.GET, "/api/users/*/public").permitAll() // Public profiles
+
+                // Users
+                .requestMatchers(HttpMethod.GET, "/api/users/*/public").permitAll()
                 .requestMatchers("/api/users/**").authenticated()
-                // Other authenticated endpoints
-                .requestMatchers("/api/videos/upload").authenticated()
-                // Instructor profile - public endpoints first
+
+                // Instructor profile
                 .requestMatchers(HttpMethod.GET, "/api/instructor/profile/*/public").permitAll()
                 .requestMatchers("/api/instructor/profile/**").authenticated()
-                .anyRequest().authenticated());
 
-        // Return 401 for unauthenticated API requests instead of redirecting to a login
-        // page
-        http.exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> response
-                .sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")));
+                .anyRequest().authenticated()
+        );
 
-        // Add JWT filter before UsernamePasswordAuthenticationFilter
+        // Return 401 instead of redirect
+        http.exceptionHandling(ex -> ex.authenticationEntryPoint(
+                (request, response, authException) ->
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+        ));
+
+        // JWT filter
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // Cấu hình PasswordEncoder để mã hóa mật khẩu
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Sử dụng BCryptPasswordEncoder để mã hóa mật khẩu
+        return new BCryptPasswordEncoder();
     }
 
-    // Cấu hình AuthenticationManager để xử lý xác thực người dùng
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-            throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authenticationConfiguration
+    ) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 }
