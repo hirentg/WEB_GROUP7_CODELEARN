@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Layout, Typography } from 'antd'
 import HomePage from './pages/HomePage'
 import CourseDetailsPage from './pages/CourseDetailsPage'
@@ -12,6 +12,7 @@ import SearchPage from './pages/SearchPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import InstructorPage from './pages/InstructorPage'
+import InstructorPublicProfile from './pages/InstructorPublicProfile'
 import AdminPage from './pages/AdminPage'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -23,14 +24,24 @@ const { Footer } = Layout
 const { Text } = Typography
 
 export default function App() {
+  const location = useLocation()
+
+  // Check if current route is an instructor dashboard page (not public profile)
+  const isInstructorDashboard = location.pathname.startsWith('/instructor') &&
+    !location.pathname.includes('/public')
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Navbar />
+      {/* Hide main navbar for instructor dashboard pages */}
+      {!isInstructorDashboard && <Navbar />}
       <Layout.Content style={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/course/:id" element={<CourseDetailsPage />} />
+
+          {/* Public instructor profile - accessible by anyone */}
+          <Route path="/instructor/:id/public" element={<InstructorPublicProfile />} />
 
           {/* Instructor routes - only accessible by INSTRUCTOR role */}
           <Route
@@ -118,11 +129,15 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout.Content>
-      <Footer style={{ textAlign: 'center', borderTop: '1px solid #e5e7eb' }}>
-        <Text type="secondary">© {new Date().getFullYear()} CodeLearn</Text>
-      </Footer>
+      {/* Hide footer for instructor dashboard pages */}
+      {!isInstructorDashboard && (
+        <Footer style={{ textAlign: 'center', borderTop: '1px solid #e5e7eb' }}>
+          <Text type="secondary">© {new Date().getFullYear()} CodeLearn</Text>
+        </Footer>
+      )}
     </Layout>
   )
 }
+
 
 

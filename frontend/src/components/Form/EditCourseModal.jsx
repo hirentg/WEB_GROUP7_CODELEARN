@@ -19,10 +19,10 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
 
       try {
         setLoading(true)
-        
+
         // Load course details with sections and videos
         const courseDetails = await api.get(`/courses/${course.id}`)
-        
+
         // Load sections from course (backend now returns sections with videos)
         const sectionsFromApi = courseDetails.sections || []
 
@@ -35,7 +35,7 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
           price: courseDetails.price,
           promo_video_url: courseDetails.promoVideoUrl || '',
         })
-        
+
         setCourseData({
           title: courseDetails.title,
           description: courseDetails.description,
@@ -93,7 +93,7 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
     }
 
     console.log('Uploading thumbnail, fileList:', fileList)
-    
+
     const formData = new FormData()
     // Ant Design Upload wraps files in an object, get the originFileObj
     const file = fileList[0].originFileObj || fileList[0]
@@ -115,7 +115,7 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
     try {
       // Upload thumbnail first if there's a new file
       const thumbnailUrl = await uploadThumbnail()
-      
+
       const payload = {
         title: courseData.title,
         description: courseData.description,
@@ -126,10 +126,12 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
         promoVideoUrl: courseData.promo_video_url || '',
         status: 'draft',
         sections: sections.map((section, idx) => ({
+          id: typeof section.id === 'number' && section.id > 1000000000000 ? null : section.id, // Only include real DB IDs, not Date.now() generated ones
           title: section.title,
           description: section.description || '',
           orderIndex: idx,
           videos: section.videos.map((video, vIdx) => ({
+            id: typeof video.id === 'number' && video.id > 1000000000000 ? null : video.id, // Only include real DB IDs
             title: video.title,
             videoUrl: video.videoUrl,
             duration: video.duration,
@@ -137,7 +139,7 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
           }))
         }))
       }
-      
+
       onSubmit(payload)
       handleReset()
     } catch (error) {
@@ -149,10 +151,10 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
   const handlePublish = async () => {
     try {
       await form.validateFields(['confirmOriginal', 'confirmReviewed'])
-      
+
       // Upload thumbnail first if there's a new file
       const thumbnailUrl = await uploadThumbnail()
-      
+
       const payload = {
         title: courseData.title,
         description: courseData.description,
@@ -163,10 +165,12 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
         promoVideoUrl: courseData.promo_video_url || '',
         status: 'published',
         sections: sections.map((section, idx) => ({
+          id: typeof section.id === 'number' && section.id > 1000000000000 ? null : section.id, // Only include real DB IDs, not Date.now() generated ones
           title: section.title,
           description: section.description || '',
           orderIndex: idx,
           videos: section.videos.map((video, vIdx) => ({
+            id: typeof video.id === 'number' && video.id > 1000000000000 ? null : video.id, // Only include real DB IDs
             title: video.title,
             videoUrl: video.videoUrl,
             duration: video.duration,
@@ -174,7 +178,7 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
           }))
         }))
       }
-      
+
       onSubmit(payload)
       handleReset()
     } catch (error) {
@@ -272,355 +276,355 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
               <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Edit Course</h2>
               <p style={{ color: '#6b7280', margin: 0 }}>Update your course content</p>
             </div>
-            <Button 
-              type="text" 
-              icon={<CloseOutlined />} 
+            <Button
+              type="text"
+              icon={<CloseOutlined />}
               onClick={handleReset}
               style={{ fontSize: 20, color: '#9ca3af' }}
             />
           </div>
 
-      <Steps
-        current={currentStep}
-        items={steps.map((step, index) => ({
-          title: step.title,
-          icon: (
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 16,
-                fontWeight: 600,
-                background: currentStep === index ? '#6366f1' : currentStep > index ? '#52c41a' : '#e5e7eb',
-                color: currentStep >= index ? '#fff' : '#6b7280',
-              }}
-            >
-              {step.icon}
-            </div>
-          ),
-        }))}
-        style={{ marginBottom: 40 }}
-      />
+          <Steps
+            current={currentStep}
+            items={steps.map((step, index) => ({
+              title: step.title,
+              icon: (
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 16,
+                    fontWeight: 600,
+                    background: currentStep === index ? '#6366f1' : currentStep > index ? '#52c41a' : '#e5e7eb',
+                    color: currentStep >= index ? '#fff' : '#6b7280',
+                  }}
+                >
+                  {step.icon}
+                </div>
+              ),
+            }))}
+            style={{ marginBottom: 40 }}
+          />
 
-      <Form form={form} layout="vertical">
-        {/* Step 1: Course Details */}
-        {currentStep === 0 && (
-          <Card style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 24 }}>Course Information</h3>
+          <Form form={form} layout="vertical">
+            {/* Step 1: Course Details */}
+            {currentStep === 0 && (
+              <Card style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 24 }}>Course Information</h3>
 
-            <Form.Item
-              name="title"
-              label="Course Title"
-              rules={[{ required: true, message: 'Please enter course title' }]}
-            >
-              <Input placeholder="e.g., React Fundamentals" size="large" />
-            </Form.Item>
+                <Form.Item
+                  name="title"
+                  label="Course Title"
+                  rules={[{ required: true, message: 'Please enter course title' }]}
+                >
+                  <Input placeholder="e.g., React Fundamentals" size="large" />
+                </Form.Item>
 
-            <Form.Item
-              name="description"
-              label="Course Description"
-              rules={[{ required: true, message: 'Please enter course description' }]}
-            >
-              <TextArea
-                rows={6}
-                placeholder="Describe what students will learn in this course..."
-                size="large"
-              />
-            </Form.Item>
+                <Form.Item
+                  name="description"
+                  label="Course Description"
+                  rules={[{ required: true, message: 'Please enter course description' }]}
+                >
+                  <TextArea
+                    rows={6}
+                    placeholder="Describe what students will learn in this course..."
+                    size="large"
+                  />
+                </Form.Item>
 
-            <Form.Item
-              name="requirements"
-              label="Requirements"
-              rules={[{ required: true, message: 'Please enter course requirements' }]}
-            >
-              <TextArea
-                rows={4}
-                placeholder="What are the prerequisites for this course? (e.g., Basic HTML, CSS knowledge)"
-                size="large"
-              />
-            </Form.Item>
+                <Form.Item
+                  name="requirements"
+                  label="Requirements"
+                  rules={[{ required: true, message: 'Please enter course requirements' }]}
+                >
+                  <TextArea
+                    rows={4}
+                    placeholder="What are the prerequisites for this course? (e.g., Basic HTML, CSS knowledge)"
+                    size="large"
+                  />
+                </Form.Item>
 
-            <Form.Item
-              name="what_you_learn"
-              label="What You'll Learn"
-              rules={[{ required: true, message: 'Please enter what students will learn' }]}
-            >
-              <TextArea
-                rows={4}
-                placeholder="What will students learn by the end of this course? (e.g., Build responsive websites, Master React hooks)"
-                size="large"
-              />
-            </Form.Item>
+                <Form.Item
+                  name="what_you_learn"
+                  label="What You'll Learn"
+                  rules={[{ required: true, message: 'Please enter what students will learn' }]}
+                >
+                  <TextArea
+                    rows={4}
+                    placeholder="What will students learn by the end of this course? (e.g., Build responsive websites, Master React hooks)"
+                    size="large"
+                  />
+                </Form.Item>
 
-            <Form.Item
-              name="price"
-              label="Price"
-              rules={[{ required: true, message: 'Please enter course price' }]}
-            >
-              <Input
-                placeholder="e.g., $99.99 or Free"
-                size="large"
-              />
-            </Form.Item>
+                <Form.Item
+                  name="price"
+                  label="Price"
+                  rules={[{ required: true, message: 'Please enter course price' }]}
+                >
+                  <Input
+                    placeholder="e.g., $99.99 or Free"
+                    size="large"
+                  />
+                </Form.Item>
 
-            <Form.Item
-              name="promo_video_url"
-              label="Promo Video URL"
-              rules={[
-                { type: 'url', message: 'Please enter a valid URL' }
-              ]}
-            >
-              <Input
-                placeholder="e.g., https://www.youtube.com/watch?v=..."
-                size="large"
-              />
-            </Form.Item>
+                <Form.Item
+                  name="promo_video_url"
+                  label="Promo Video URL"
+                  rules={[
+                    { type: 'url', message: 'Please enter a valid URL' }
+                  ]}
+                >
+                  <Input
+                    placeholder="e.g., https://www.youtube.com/watch?v=..."
+                    size="large"
+                  />
+                </Form.Item>
 
-            <Form.Item name="thumbnail" label="Course Thumbnail">
-              <Upload {...uploadProps}>
-                {fileList.length < 1 && (
-                  <div>
-                    <PlusOutlined />
-                    <div style={{ marginTop: 8 }}>Upload</div>
-                  </div>
-                )}
-              </Upload>
-            </Form.Item>
-          </Card>
-        )}
-
-        {/* Step 2: Content Structure */}
-        {currentStep === 1 && (
-          <Card style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, minHeight: 300 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Course Content</h3>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={addSection}
-                style={{ background: '#6366f1', borderColor: '#6366f1' }}
-              >
-                Add Section
-              </Button>
-            </div>
-
-            {sections.length === 0 ? (
-              <Empty
-                image={<BookOutlined style={{ fontSize: 64, color: '#d1d5db' }} />}
-                description={
-                  <span style={{ color: '#6b7280' }}>
-                    No sections yet. Click "Add Section" to get started.
-                  </span>
-                }
-                style={{ padding: '60px 0' }}
-              />
-            ) : (
-              <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                {sections.map((section, sectionIndex) => (
-                  <Card
-                    key={section.id}
-                    size="small"
-                    style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}
-                    title={`Section ${sectionIndex + 1}`}
-                    extra={
-                      <Button
-                        type="text"
-                        icon={<CloseOutlined />}
-                        onClick={() => removeSection(section.id)}
-                        danger
-                        size="small"
-                      />
-                    }
-                  >
-                    <Space direction="vertical" style={{ width: '100%' }} size="small">
-                      <Input
-                        placeholder="Section title (e.g., Introduction to React)"
-                        value={section.title}
-                        onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
-                        size="large"
-                      />
-                      <TextArea
-                        placeholder="Section description (optional)"
-                        value={section.description}
-                        onChange={(e) => updateSection(sectionIndex, 'description', e.target.value)}
-                        rows={2}
-                      />
-                      
-                      {/* Videos in this section */}
-                      <div style={{ marginTop: 16 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                          <span style={{ fontWeight: 500, color: '#6b7280' }}>Videos ({section.videos.length})</span>
-                          <Button
-                            type="dashed"
-                            size="small"
-                            icon={<PlusOutlined />}
-                            onClick={() => addVideo(sectionIndex)}
-                          >
-                            Add Video
-                          </Button>
-                        </div>
-                        
-                        {section.videos.length > 0 && (
-                          <Space direction="vertical" style={{ width: '100%', marginTop: 8 }} size="small">
-                            {section.videos.map((video, videoIndex) => (
-                              <Card
-                                key={video.id}
-                                size="small"
-                                style={{ background: '#fff', border: '1px solid #e5e7eb' }}
-                              >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                  <div style={{ flex: 1, marginRight: 8 }}>
-                                    <Input
-                                      placeholder="Video title"
-                                      value={video.title}
-                                      onChange={(e) => updateVideo(sectionIndex, videoIndex, 'title', e.target.value)}
-                                      style={{ marginBottom: 8 }}
-                                    />
-                                    <Input
-                                      placeholder="Video URL"
-                                      value={video.videoUrl}
-                                      onChange={(e) => updateVideo(sectionIndex, videoIndex, 'videoUrl', e.target.value)}
-                                      style={{ marginBottom: 8 }}
-                                    />
-                                    <div>
-                                      <div style={{ marginBottom: 4, fontSize: 13, color: '#6b7280' }}>
-                                        Duration (in seconds)
-                                      </div>
-                                      <Input
-                                        type="number"
-                                        placeholder="e.g., 300 (5 minutes)"
-                                        value={video.duration}
-                                        onChange={(e) => updateVideo(sectionIndex, videoIndex, 'duration', parseInt(e.target.value) || 0)}
-                                        style={{ width: '100%' }}
-                                        min={0}
-                                        addonAfter="seconds"
-                                      />
-                                      <div style={{ marginTop: 4, fontSize: 12, color: '#9ca3af' }}>
-                                        Tip: 1 minute = 60 seconds, 5 minutes = 300 seconds
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <Button
-                                    type="text"
-                                    icon={<CloseOutlined />}
-                                    onClick={() => removeVideo(sectionIndex, videoIndex)}
-                                    danger
-                                    size="small"
-                                  />
-                                </div>
-                              </Card>
-                            ))}
-                          </Space>
-                        )}
+                <Form.Item name="thumbnail" label="Course Thumbnail">
+                  <Upload {...uploadProps}>
+                    {fileList.length < 1 && (
+                      <div>
+                        <PlusOutlined />
+                        <div style={{ marginTop: 8 }}>Upload</div>
                       </div>
-                    </Space>
-                  </Card>
-                ))}
-              </Space>
+                    )}
+                  </Upload>
+                </Form.Item>
+              </Card>
             )}
-          </Card>
-        )}
 
-        {/* Step 3: Publish */}
-        {currentStep === 2 && (
-          <Card style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 24 }}>Ready to Publish</h3>
-
-            <Card style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, marginBottom: 24 }}>
-              <h4 style={{ fontSize: 16, fontWeight: 600, color: '#166534', marginBottom: 12 }}>Course Summary</h4>
-              <div style={{ color: '#15803d', lineHeight: 2 }}>
-                <div>
-                  <strong>Title:</strong> {courseData.title || course?.title || 'Untitled Course'}
+            {/* Step 2: Content Structure */}
+            {currentStep === 1 && (
+              <Card style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, minHeight: 300 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Course Content</h3>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={addSection}
+                    style={{ background: '#6366f1', borderColor: '#6366f1' }}
+                  >
+                    Add Section
+                  </Button>
                 </div>
-                <div>
-                  <strong>Sections:</strong> {sections.length}
-                </div>
-                <div>
-                  <strong>Total Videos:</strong> {sections.reduce((acc, s) => acc + s.videos.length, 0)}
-                </div>
-              </div>
-            </Card>
 
-            <Form.Item
-              name="confirmOriginal"
-              valuePropName="checked"
-              rules={[
-                {
-                  validator: (_, value) =>
-                    value ? Promise.resolve() : Promise.reject(new Error('Please confirm')),
-                },
-              ]}
-            >
-              <Checkbox>I confirm that all course content is original or properly licensed</Checkbox>
-            </Form.Item>
+                {sections.length === 0 ? (
+                  <Empty
+                    image={<BookOutlined style={{ fontSize: 64, color: '#d1d5db' }} />}
+                    description={
+                      <span style={{ color: '#6b7280' }}>
+                        No sections yet. Click "Add Section" to get started.
+                      </span>
+                    }
+                    style={{ padding: '60px 0' }}
+                  />
+                ) : (
+                  <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                    {sections.map((section, sectionIndex) => (
+                      <Card
+                        key={section.id}
+                        size="small"
+                        style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}
+                        title={`Section ${sectionIndex + 1}`}
+                        extra={
+                          <Button
+                            type="text"
+                            icon={<CloseOutlined />}
+                            onClick={() => removeSection(section.id)}
+                            danger
+                            size="small"
+                          />
+                        }
+                      >
+                        <Space direction="vertical" style={{ width: '100%' }} size="small">
+                          <Input
+                            placeholder="Section title (e.g., Introduction to React)"
+                            value={section.title}
+                            onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
+                            size="large"
+                          />
+                          <TextArea
+                            placeholder="Section description (optional)"
+                            value={section.description}
+                            onChange={(e) => updateSection(sectionIndex, 'description', e.target.value)}
+                            rows={2}
+                          />
 
-            <Form.Item
-              name="confirmReviewed"
-              valuePropName="checked"
-              rules={[
-                {
-                  validator: (_, value) =>
-                    value ? Promise.resolve() : Promise.reject(new Error('Please confirm')),
-                },
-              ]}
-            >
-              <Checkbox>I have reviewed all lessons for accuracy and quality</Checkbox>
-            </Form.Item>
-          </Card>
-        )}
-      </Form>
+                          {/* Videos in this section */}
+                          <div style={{ marginTop: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                              <span style={{ fontWeight: 500, color: '#6b7280' }}>Videos ({section.videos.length})</span>
+                              <Button
+                                type="dashed"
+                                size="small"
+                                icon={<PlusOutlined />}
+                                onClick={() => addVideo(sectionIndex)}
+                              >
+                                Add Video
+                              </Button>
+                            </div>
 
-      {/* Footer Actions */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          marginTop: 24,
-          paddingTop: 24,
-          borderTop: '1px solid #e5e7eb',
-        }}
-      >
-        <div>
-          {currentStep > 0 ? (
-            <Button size="large" onClick={handlePrevious}>
-              Previous
-            </Button>
-          ) : (
-            <Button size="large" onClick={handleReset}>
-              Cancel
-            </Button>
-          )}
-        </div>
+                            {section.videos.length > 0 && (
+                              <Space direction="vertical" style={{ width: '100%', marginTop: 8 }} size="small">
+                                {section.videos.map((video, videoIndex) => (
+                                  <Card
+                                    key={video.id}
+                                    size="small"
+                                    style={{ background: '#fff', border: '1px solid #e5e7eb' }}
+                                  >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                      <div style={{ flex: 1, marginRight: 8 }}>
+                                        <Input
+                                          placeholder="Video title"
+                                          value={video.title}
+                                          onChange={(e) => updateVideo(sectionIndex, videoIndex, 'title', e.target.value)}
+                                          style={{ marginBottom: 8 }}
+                                        />
+                                        <Input
+                                          placeholder="Video URL"
+                                          value={video.videoUrl}
+                                          onChange={(e) => updateVideo(sectionIndex, videoIndex, 'videoUrl', e.target.value)}
+                                          style={{ marginBottom: 8 }}
+                                        />
+                                        <div>
+                                          <div style={{ marginBottom: 4, fontSize: 13, color: '#6b7280' }}>
+                                            Duration (in seconds)
+                                          </div>
+                                          <Input
+                                            type="number"
+                                            placeholder="e.g., 300 (5 minutes)"
+                                            value={video.duration}
+                                            onChange={(e) => updateVideo(sectionIndex, videoIndex, 'duration', parseInt(e.target.value) || 0)}
+                                            style={{ width: '100%' }}
+                                            min={0}
+                                            addonAfter="seconds"
+                                          />
+                                          <div style={{ marginTop: 4, fontSize: 12, color: '#9ca3af' }}>
+                                            Tip: 1 minute = 60 seconds, 5 minutes = 300 seconds
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <Button
+                                        type="text"
+                                        icon={<CloseOutlined />}
+                                        onClick={() => removeVideo(sectionIndex, videoIndex)}
+                                        danger
+                                        size="small"
+                                      />
+                                    </div>
+                                  </Card>
+                                ))}
+                              </Space>
+                            )}
+                          </div>
+                        </Space>
+                      </Card>
+                    ))}
+                  </Space>
+                )}
+              </Card>
+            )}
 
-        <Space>
-          <Button size="large" onClick={handleSaveDraft}>
-            Save as Draft
-          </Button>
-          {currentStep < 2 ? (
-            <Button
-              type="primary"
-              size="large"
-              onClick={handleNext}
-              style={{ background: '#6366f1', borderColor: '#6366f1' }}
-            >
-              Next Step
-            </Button>
-          ) : (
-            <Button
-              type="primary"
-              size="large"
-              onClick={handlePublish}
-              style={{ background: '#16a34a', borderColor: '#16a34a' }}
-            >
-              Publish Course
-            </Button>
-          )}
-        </Space>
-      </div>
+            {/* Step 3: Publish */}
+            {currentStep === 2 && (
+              <Card style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 24 }}>Ready to Publish</h3>
+
+                <Card style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, marginBottom: 24 }}>
+                  <h4 style={{ fontSize: 16, fontWeight: 600, color: '#166534', marginBottom: 12 }}>Course Summary</h4>
+                  <div style={{ color: '#15803d', lineHeight: 2 }}>
+                    <div>
+                      <strong>Title:</strong> {courseData.title || course?.title || 'Untitled Course'}
+                    </div>
+                    <div>
+                      <strong>Sections:</strong> {sections.length}
+                    </div>
+                    <div>
+                      <strong>Total Videos:</strong> {sections.reduce((acc, s) => acc + s.videos.length, 0)}
+                    </div>
+                  </div>
+                </Card>
+
+                <Form.Item
+                  name="confirmOriginal"
+                  valuePropName="checked"
+                  rules={[
+                    {
+                      validator: (_, value) =>
+                        value ? Promise.resolve() : Promise.reject(new Error('Please confirm')),
+                    },
+                  ]}
+                >
+                  <Checkbox>I confirm that all course content is original or properly licensed</Checkbox>
+                </Form.Item>
+
+                <Form.Item
+                  name="confirmReviewed"
+                  valuePropName="checked"
+                  rules={[
+                    {
+                      validator: (_, value) =>
+                        value ? Promise.resolve() : Promise.reject(new Error('Please confirm')),
+                    },
+                  ]}
+                >
+                  <Checkbox>I have reviewed all lessons for accuracy and quality</Checkbox>
+                </Form.Item>
+              </Card>
+            )}
+          </Form>
+
+          {/* Footer Actions */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: 24,
+              paddingTop: 24,
+              borderTop: '1px solid #e5e7eb',
+            }}
+          >
+            <div>
+              {currentStep > 0 ? (
+                <Button size="large" onClick={handlePrevious}>
+                  Previous
+                </Button>
+              ) : (
+                <Button size="large" onClick={handleReset}>
+                  Cancel
+                </Button>
+              )}
+            </div>
+
+            <Space>
+              <Button size="large" onClick={handleSaveDraft}>
+                Save as Draft
+              </Button>
+              {currentStep < 2 ? (
+                <Button
+                  type="primary"
+                  size="large"
+                  onClick={handleNext}
+                  style={{ background: '#6366f1', borderColor: '#6366f1' }}
+                >
+                  Next Step
+                </Button>
+              ) : (
+                <Button
+                  type="primary"
+                  size="large"
+                  onClick={handlePublish}
+                  style={{ background: '#16a34a', borderColor: '#16a34a' }}
+                >
+                  Publish Course
+                </Button>
+              )}
+            </Space>
+          </div>
         </>
       )}
     </div>

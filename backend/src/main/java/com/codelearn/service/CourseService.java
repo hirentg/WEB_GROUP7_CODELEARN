@@ -8,6 +8,8 @@ import com.codelearn.model.Course;
 import com.codelearn.model.Section;
 import com.codelearn.model.Video;
 import com.codelearn.repository.CourseRepository;
+import com.codelearn.repository.QuestionRepository;
+import com.codelearn.repository.QuizRepository;
 import com.codelearn.repository.SectionRepository;
 import com.codelearn.repository.VideoRepository;
 import jakarta.transaction.Transactional;
@@ -36,6 +38,12 @@ public class CourseService {
     @Autowired
     private VideoRepository videoRepository;
 
+    @Autowired
+    private QuestionRepository questionRepository;
+
+    @Autowired
+    private QuizRepository quizRepository;
+
     /**
      * Get all courses for students/public view
      * Only returns PUBLISHED courses
@@ -62,6 +70,16 @@ public class CourseService {
             course.setCompletion(completion != null ? completion : 0.0);
         });
         return courses;
+    }
+
+    /**
+     * Get only PUBLISHED courses for a specific instructor (for public profile)
+     */
+    public List<Course> getPublishedCoursesByInstructor(Long instructorId) {
+        List<Course> allCourses = courseRepository.findByInstructorId(instructorId);
+        return allCourses.stream()
+                .filter(course -> "PUBLISHED".equalsIgnoreCase(course.getStatus()))
+                .collect(Collectors.toList());
     }
 
     public Course getCourseById(String id) {
@@ -467,46 +485,121 @@ public class CourseService {
             course.setLanguage(request.getLanguage());
         }
 
-        // Delete old sections and videos
-        sectionRepository.deleteByCourseId(courseId);
+        // INCREMENTAL UPDATE: Update existing sections/videos, add new ones, remove
+        // only deleted ones
+        if (request.getSections() != null) {
+            // Get existing sections and videos
+            List<Section> existingSections = sectionRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
+            List<Video> existingVideos = videoRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
 
-        // Create new sections and videos
-        if (request.getSections() != null && !request.getSections().isEmpty()) {
+            // Track IDs of sections/videos in the request (to identify what to delete)
+            List<Long> requestSectionIds = request.getSections().stream()
+                    .filter(s -> s.getId() != null)
+                    .map(CreateSectionRequest::getId)
+                    .collect(Collectors.toList());
+
+            List<Long> requestVideoIds = request.getSections().stream()
+                    .flatMap(s -> s.getVideos() != null ? s.getVideos().stream() : java.util.stream.Stream.empty())
+                    .filter(v -> v.getId() != null)
+                    .map(CreateVideoRequest::getId)
+                    .collect(Collectors.toList());
+
+            // Find videos to delete (exist in DB but not in request)
+            List<Long> videoIdsToDelete = existingVideos.stream()
+                    .filter(v -> !requestVideoIds.contains(v.getId()))
+                    .map(Video::getId)
+                    .collect(Collectors.toList());
+
+            // Delete questions and quizzes for videos being removed
+            if (!videoIdsToDelete.isEmpty()) {
+                questionRepository.deleteByVideoIdIn(videoIdsToDelete);
+                quizRepository.deleteByVideoIdIn(videoIdsToDelete);
+                // Delete the videos
+                for (Long videoId : videoIdsToDelete) {
+                    videoRepository.deleteById(videoId);
+                }
+            }
+
+            // Find sections to delete (exist in DB but not in request)
+            List<Long> sectionIdsToDelete = existingSections.stream()
+                    .filter(s -> !requestSectionIds.contains(s.getId()))
+                    .map(Section::getId)
+                    .collect(Collectors.toList());
+
+            // Delete sections (videos already deleted above)
+            for (Long sectionId : sectionIdsToDelete) {
+                sectionRepository.deleteById(sectionId);
+            }
+
             int totalVideos = 0;
             int totalDurationSeconds = 0;
 
+            // Process each section in the request
             for (CreateSectionRequest sectionReq : request.getSections()) {
-                Section section = new Section();
-                section.setCourseId(courseId);
-                section.setTitle(sectionReq.getTitle());
-                section.setDescription(sectionReq.getDescription());
-                section.setOrderIndex(sectionReq.getOrderIndex());
+                Section section;
 
-                Section savedSection = sectionRepository.save(section);
+                if (sectionReq.getId() != null) {
+                    // Update existing section
+                    section = sectionRepository.findById(sectionReq.getId()).orElse(null);
+                    if (section != null) {
+                        section.setTitle(sectionReq.getTitle());
+                        section.setDescription(sectionReq.getDescription());
+                        section.setOrderIndex(sectionReq.getOrderIndex());
+                        section = sectionRepository.save(section);
+                    } else {
+                        // Section ID provided but not found, create new
+                        section = new Section();
+                        section.setCourseId(courseId);
+                        section.setTitle(sectionReq.getTitle());
+                        section.setDescription(sectionReq.getDescription());
+                        section.setOrderIndex(sectionReq.getOrderIndex());
+                        section = sectionRepository.save(section);
+                    }
+                } else {
+                    // Create new section
+                    section = new Section();
+                    section.setCourseId(courseId);
+                    section.setTitle(sectionReq.getTitle());
+                    section.setDescription(sectionReq.getDescription());
+                    section.setOrderIndex(sectionReq.getOrderIndex());
+                    section = sectionRepository.save(section);
+                }
 
+                // Process videos for this section
                 if (sectionReq.getVideos() != null) {
                     for (CreateVideoRequest videoReq : sectionReq.getVideos()) {
-                        Video video = new Video();
-                        video.setSectionId(savedSection.getId());
-                        video.setTitle(videoReq.getTitle());
+                        Video video;
 
-                        String videoUrl = videoReq.getVideoUrl();
-                        if (videoUrl == null || videoUrl.trim().isEmpty()) {
-                            videoUrl = DEFAULT_VIDEO_URL;
+                        if (videoReq.getId() != null) {
+                            // Update existing video
+                            video = videoRepository.findById(videoReq.getId()).orElse(null);
+                            if (video != null) {
+                                video.setTitle(videoReq.getTitle());
+                                String videoUrl = videoReq.getVideoUrl();
+                                if (videoUrl != null && !videoUrl.trim().isEmpty()) {
+                                    video.setVideoUrl(videoUrl);
+                                }
+                                Integer duration = videoReq.getDuration() != null ? videoReq.getDuration()
+                                        : video.getDuration();
+                                video.setDuration(duration != null ? duration : 0);
+                                video.setOrderIndex(videoReq.getOrderIndex());
+                                video.setSectionId(section.getId());
+                                videoRepository.save(video);
+
+                                totalVideos++;
+                                totalDurationSeconds += duration != null ? duration : 0;
+                            } else {
+                                // Video ID provided but not found, create new
+                                video = createNewVideo(videoReq, section, course);
+                                totalVideos++;
+                                totalDurationSeconds += video.getDuration() != null ? video.getDuration() : 0;
+                            }
+                        } else {
+                            // Create new video
+                            video = createNewVideo(videoReq, section, course);
+                            totalVideos++;
+                            totalDurationSeconds += video.getDuration() != null ? video.getDuration() : 0;
                         }
-                        video.setVideoUrl(videoUrl);
-
-                        video.setDuration(videoReq.getDuration());
-                        video.setOrderIndex(videoReq.getOrderIndex());
-                        video.setContentType("VIDEO");
-                        video.setIsPreview(false);
-                        video.setIsFree(false);
-                        video.setCourse(course);
-
-                        videoRepository.save(video);
-
-                        totalVideos++;
-                        totalDurationSeconds += videoReq.getDuration();
                     }
                 }
             }
@@ -518,6 +611,28 @@ public class CourseService {
 
         // Save and return updated course
         return courseRepository.save(course);
+    }
+
+    private Video createNewVideo(CreateVideoRequest videoReq, Section section, Course course) {
+        Video video = new Video();
+        video.setSectionId(section.getId());
+        video.setTitle(videoReq.getTitle());
+
+        String videoUrl = videoReq.getVideoUrl();
+        if (videoUrl == null || videoUrl.trim().isEmpty()) {
+            videoUrl = DEFAULT_VIDEO_URL;
+        }
+        video.setVideoUrl(videoUrl);
+
+        Integer duration = videoReq.getDuration() != null ? videoReq.getDuration() : 0;
+        video.setDuration(duration);
+        video.setOrderIndex(videoReq.getOrderIndex());
+        video.setContentType("VIDEO");
+        video.setIsPreview(false);
+        video.setIsFree(false);
+        video.setCourse(course);
+
+        return videoRepository.save(video);
     }
 
     @Transactional

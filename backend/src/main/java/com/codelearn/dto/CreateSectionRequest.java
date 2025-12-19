@@ -3,12 +3,22 @@ package com.codelearn.dto;
 import java.util.List;
 
 public class CreateSectionRequest {
+    private Long id; // null for new sections, set for existing sections
     private String title;
     private String description;
     private Integer orderIndex;
     private List<CreateVideoRequest> videos;
-    
-    public CreateSectionRequest() {}
+
+    public CreateSectionRequest() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getTitle() {
         return title;

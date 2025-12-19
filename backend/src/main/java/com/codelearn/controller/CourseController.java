@@ -77,6 +77,19 @@ public class CourseController {
         }
     }
 
+    /**
+     * Get published courses by instructor ID (public endpoint)
+     */
+    @GetMapping("/instructor/{instructorId}")
+    public ResponseEntity<List<Course>> getPublicInstructorCourses(@PathVariable Long instructorId) {
+        try {
+            List<Course> courses = courseService.getPublishedCoursesByInstructor(instructorId);
+            return ResponseEntity.ok(courses);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<CourseDetailResponse> getCourseById(@PathVariable String id) {
         CourseDetailResponse courseDetail = courseService.getCourseDetailById(id);

@@ -73,6 +73,10 @@ public class PurchaseService {
         purchasedCourse.setPayment(payment);
         purchasedCourseRepository.save(purchasedCourse);
 
+        // Increment student count on the course
+        course.setStudents(course.getStudents() + 1);
+        courseRepository.save(course);
+
         System.out.println("Payment successful: User " + userId + " purchased course " +
                 request.getCourseId() + " via " + request.getPaymentMethod());
 

@@ -133,6 +133,28 @@ export default function CourseDetailsPage() {
     }
   }
 
+  // Calculate total video duration from all sections
+  const calculateTotalDuration = () => {
+    if (!course?.sections) return course?.duration || '0h'
+    let totalSeconds = 0
+    course.sections.forEach(section => {
+      if (section.videos) {
+        section.videos.forEach(video => {
+          if (video.duration) {
+            totalSeconds += video.duration
+          }
+        })
+      }
+    })
+    if (totalSeconds === 0) return course?.duration || '0h'
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`
+    }
+    return `${minutes}m`
+  }
+
   if (loading) {
     return (
       <div style={{ height: '60vh', display: 'grid', placeItems: 'center' }}>
@@ -184,8 +206,16 @@ export default function CourseDetailsPage() {
               </Space>
 
               <Space size="large" style={{ color: '#d1d5db' }}>
-                <Space><UserOutlined /> Created by <span style={{ color: '#60a5fa', textDecoration: 'underline' }}>{course.instructor}</span></Space>
-                <Space><GlobalOutlined /> English</Space>
+                <Space>
+                  <UserOutlined /> Created by{' '}
+                  <span
+                    style={{ color: '#60a5fa', textDecoration: 'underline', cursor: 'pointer' }}
+                    onClick={() => course.instructorId && navigate(`/instructor/${course.instructorId}/public`)}
+                  >
+                    {course.instructor}
+                  </span>
+                </Space>
+                <Space><GlobalOutlined /> {course.language || 'English'}</Space>
                 <Space><ClockCircleOutlined /> Last updated 11/2024</Space>
               </Space>
             </Col>
@@ -452,8 +482,8 @@ export default function CourseDetailsPage() {
 
                   <Space direction="vertical" size="small">
                     <Text strong>This course includes:</Text>
-                    <Space><FileTextOutlined /> {course.duration} on-demand video</Space>
-                    <Space><FileTextOutlined /> 5 downloadable resources</Space>
+                    <Space><FileTextOutlined /> {calculateTotalDuration()} on-demand video</Space>
+                    <Space><FileTextOutlined /> {course.sections?.reduce((acc, s) => acc + (s.videos?.length || 0), 0) || 0} lectures</Space>
                     <Space><GlobalOutlined /> Full lifetime access</Space>
                     <Space><CheckCircleOutlined /> Certificate of completion</Space>
                   </Space>

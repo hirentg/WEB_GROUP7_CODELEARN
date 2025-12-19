@@ -78,7 +78,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/**").authenticated()
                 // Other authenticated endpoints
                 .requestMatchers("/api/videos/upload").authenticated()
-                .requestMatchers("/api/instructor/profile").authenticated()
+                // Instructor profile - public endpoints first
+                .requestMatchers(HttpMethod.GET, "/api/instructor/profile/*/public").permitAll()
+                .requestMatchers("/api/instructor/profile/**").authenticated()
                 .anyRequest().authenticated());
 
         // Return 401 for unauthenticated API requests instead of redirecting to a login
