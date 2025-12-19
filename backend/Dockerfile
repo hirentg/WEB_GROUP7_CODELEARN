@@ -7,7 +7,7 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
 # Copy source code
-COPY src ./src
+COPY src ./backend/src
 
 # Build the application
 RUN mvn clean package -DskipTests
