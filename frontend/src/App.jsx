@@ -12,6 +12,7 @@ import SearchPage from './pages/SearchPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import InstructorPage from './pages/InstructorPage'
+import InstructorPublicProfile from './pages/InstructorPublicProfile'
 import AdminPage from './pages/AdminPage'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -31,6 +32,9 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/course/:id" element={<CourseDetailsPage />} />
+
+          {/* Public instructor profile - accessible by anyone */}
+          <Route path="/instructor/:id/public" element={<InstructorPublicProfile />} />
 
           {/* Instructor routes - only accessible by INSTRUCTOR role */}
           <Route

@@ -64,6 +64,16 @@ public class CourseService {
         return courses;
     }
 
+    /**
+     * Get only PUBLISHED courses for a specific instructor (for public profile)
+     */
+    public List<Course> getPublishedCoursesByInstructor(Long instructorId) {
+        List<Course> allCourses = courseRepository.findByInstructorId(instructorId);
+        return allCourses.stream()
+                .filter(course -> "PUBLISHED".equalsIgnoreCase(course.getStatus()))
+                .collect(Collectors.toList());
+    }
+
     public Course getCourseById(String id) {
         Course course = courseRepository.findById(id).orElse(null);
         if (course != null) {

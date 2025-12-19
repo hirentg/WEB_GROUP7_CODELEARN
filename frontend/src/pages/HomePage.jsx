@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Row, Col, Typography, Input, Tag, Card, Avatar, Rate, Spin, Alert, Space, Button } from 'antd'
 import { SearchOutlined, PlayCircleFilled, CheckCircleFilled } from '@ant-design/icons'
 import CourseCard from '../components/CourseCard'
@@ -9,7 +10,9 @@ const { Title, Paragraph, Text } = Typography
 
 export default function HomePage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [courses, setCourses] = useState([])
+  const [purchasedCourses, setPurchasedCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -27,6 +30,29 @@ export default function HomePage() {
       })
     return () => { isMounted = false }
   }, [])
+
+  // Fetch purchased courses for logged-in users
+  useEffect(() => {
+    if (user) {
+      api.get('/purchases')
+        .then((res) => {
+          if (Array.isArray(res)) {
+            setPurchasedCourses(res)
+          }
+        })
+        .catch(() => { })
+    }
+  }, [user])
+
+  const handleResumeLearning = () => {
+    if (purchasedCourses.length > 0) {
+      // Navigate to the most recently purchased course
+      const latestCourse = purchasedCourses[0]
+      navigate(`/course/${latestCourse.id}/learn`)
+    } else {
+      navigate('/my-learning')
+    }
+  }
 
   const experts = [
     { name: 'Jane Doe', title: 'Staff Engineer', company: 'TechCorp' },
@@ -54,7 +80,7 @@ export default function HomePage() {
               <Paragraph style={{ fontSize: '20px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
                 Ready to continue your journey? Pick up where you left off.
               </Paragraph>
-              <Button type="primary" size="large" shape="round" icon={<PlayCircleFilled />}>
+              <Button type="primary" size="large" shape="round" icon={<PlayCircleFilled />} onClick={handleResumeLearning}>
                 Resume Learning
               </Button>
             </div>
@@ -113,15 +139,15 @@ export default function HomePage() {
       </div>
 
       <div className="container section-padding">
-        {/* Continue Learning (if user) */}
-        {user && courses.length > 0 && (
+        {/* Continue Learning (if user has purchased courses) */}
+        {user && purchasedCourses.length > 0 && (
           <div style={{ marginBottom: '64px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', marginBottom: '24px' }}>
               <Title level={2} style={{ margin: 0 }}>Continue learning</Title>
-              <Button type="link">View all</Button>
+              <Button type="link" onClick={() => navigate('/my-learning')}>View all</Button>
             </div>
             <Row gutter={[24, 24]}>
-              {courses.slice(0, 2).map((c) => (
+              {purchasedCourses.slice(0, 2).map((c) => (
                 <Col xs={24} sm={12} md={12} key={`cont-${c.id}`}>
                   <CourseCard course={c} />
                 </Col>
