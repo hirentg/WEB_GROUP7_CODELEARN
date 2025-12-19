@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://codelearn-backend.onrender.com/api'
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://codelearn-backend-pban.onrender.com/api'
 
 async function request(method, path, body) {
   const token = localStorage.getItem('cl_token')
@@ -18,6 +18,7 @@ async function request(method, path, body) {
   const options = {
     method,
     headers,
+    credentials: 'include'
   }
 
   // Only stringify non-FormData bodies
