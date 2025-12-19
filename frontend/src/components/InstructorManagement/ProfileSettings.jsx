@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { Card, Input, Button, Upload, Avatar, Checkbox, Space, Row, Col, message } from 'antd'
+import React, { useState, useEffect, useRef } from 'react'
+import { Card, Input, Button, Upload, Avatar, Checkbox, Space, Row, Col, message, Spin } from 'antd'
 import { 
   CameraOutlined,
   GlobalOutlined,
@@ -8,15 +8,19 @@ import {
   GithubOutlined,
   UserOutlined,
   SaveOutlined,
-  StarFilled
+  StarFilled,
+  LoadingOutlined
 } from '@ant-design/icons'
 import { api } from '../../services/api'
+import { uploadAvatar } from '../../services/uploadApi'
 
 const { TextArea } = Input
 
 const ProfileSettings = () => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const fileInputRef = useRef(null)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -112,6 +116,46 @@ const ProfileSettings = () => {
     }
   }
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      message.error('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      message.error('Image size must be less than 5MB')
+      return
+    }
+
+    try {
+      setUploadingAvatar(true)
+      const imageUrl = await uploadAvatar(file)
+      
+      // Update form data with new avatar URL
+      setFormData({ ...formData, avatarUrl: imageUrl })
+      
+      message.success('Avatar uploaded successfully!')
+    } catch (error) {
+      console.error('Error uploading avatar:', error)
+      message.error(error.message || 'Failed to upload avatar')
+    } finally {
+      setUploadingAvatar(false)
+      // Clear the input so the same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
   const quickStats = [
     { label: 'Total Courses', value: stats.totalCourses.toString() },
     { label: 'Total Students', value: stats.totalStudents.toLocaleString() },
@@ -195,29 +239,44 @@ const ProfileSettings = () => {
             styles={{ header: { fontWeight: 600, fontSize: 16 } }}
           >
             <div style={{ textAlign: 'center' }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleAvatarChange}
+              />
               <div style={{ position: 'relative', display: 'inline-block', marginBottom: 16 }}>
                 <Avatar 
                   size={140} 
-                  icon={<UserOutlined />}
+                  icon={!formData.avatarUrl && <UserOutlined />}
                   style={{ background: '#9ca3af' }}
                   src={formData.avatarUrl || "https://randomuser.me/api/portraits/men/32.jpg"}
                 />
-                <div style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  right: 0,
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  background: '#6366f1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  border: '3px solid white',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                }}>
-                  <CameraOutlined style={{ fontSize: 20, color: '#fff' }} />
+                <div 
+                  onClick={handleAvatarClick}
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    width: 44,
+                    height: 44,
+                    borderRadius: '50%',
+                    background: uploadingAvatar ? '#9ca3af' : '#6366f1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: uploadingAvatar ? 'not-allowed' : 'pointer',
+                    border: '3px solid white',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  {uploadingAvatar ? (
+                    <LoadingOutlined style={{ fontSize: 20, color: '#fff' }} spin />
+                  ) : (
+                    <CameraOutlined style={{ fontSize: 20, color: '#fff' }} />
+                  )}
                 </div>
               </div>
               <p style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>
