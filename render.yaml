@@ -13,8 +13,8 @@ services:
     env: docker
     region: oregon
     plan: free
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
     envVars:
       - key: SPRING_JPA_DDL_AUTO
         value: update
