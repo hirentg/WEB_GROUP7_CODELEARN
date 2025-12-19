@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Steps, Button, Form, Input, Upload, Card, Checkbox, Space, Empty, message, Spin } from 'antd'
-import { PlusOutlined, CloseOutlined, BookOutlined, CheckCircleFilled } from '@ant-design/icons'
+import { PlusOutlined, CloseOutlined, BookOutlined, CheckCircleFilled, LoadingOutlined } from '@ant-design/icons'
 import { api } from '../../services/api'
+import { uploadThumbnail } from '../../services/uploadApi'
 
 const { TextArea } = Input
 
@@ -9,6 +10,8 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [form] = Form.useForm()
   const [fileList, setFileList] = useState([])
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
+  const [thumbnailUrl, setThumbnailUrl] = useState('')
   const [sections, setSections] = useState([])
   const [courseData, setCourseData] = useState({})
   const [loading, setLoading] = useState(true)
@@ -57,6 +60,9 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
             duration: v.duration || 0
           }))
         })))
+
+        // Set initial thumbnail URL
+        setThumbnailUrl(courseDetails.thumbnailUrl || '')
       } catch (error) {
         console.error('Error loading course data:', error)
         message.error('Failed to load course data')
@@ -86,35 +92,39 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
     setCurrentStep(currentStep - 1)
   }
 
-  const uploadThumbnail = async () => {
-    if (fileList.length === 0) {
-      console.log('No file to upload, using existing thumbnail')
-      return course.thumbnailUrl || ''
-    }
-
-    console.log('Uploading thumbnail, fileList:', fileList)
-
-    const formData = new FormData()
-    // Ant Design Upload wraps files in an object, get the originFileObj
-    const file = fileList[0].originFileObj || fileList[0]
-    console.log('File to upload:', file)
-    formData.append('file', file)
-
+  const handleThumbnailUpload = async (options) => {
+    const { file, onSuccess, onError } = options
+    console.log('EditCourse - customRequest - uploading file:', file.name)
+    
     try {
-      const response = await api.post('/courses/upload-thumbnail', formData)
-      console.log('Upload response:', response)
-      return response.url || course.thumbnailUrl || ''
+      setUploadingThumbnail(true)
+      const imageUrl = await uploadThumbnail(file)
+      console.log('EditCourse - Thumbnail uploaded, URL:', imageUrl)
+      setThumbnailUrl(imageUrl)
+      message.success('Thumbnail uploaded successfully!')
+      onSuccess(imageUrl)
     } catch (error) {
-      console.error('Error uploading thumbnail:', error)
-      message.error('Failed to upload thumbnail')
-      return course.thumbnailUrl || ''
+      console.error('EditCourse - Error uploading thumbnail:', error)
+      message.error(error.message || 'Failed to upload thumbnail')
+      onError(error)
+    } finally {
+      setUploadingThumbnail(false)
     }
+  }
+
+  const handleThumbnailChange = ({ fileList: newFileList }) => {
+    console.log('EditCourse - onChange - fileList:', newFileList)
+    setFileList(newFileList)
+  }
+
+  const handleThumbnailRemove = () => {
+    setFileList([])
+    // Keep the existing URL if no new upload
   }
 
   const handleSaveDraft = async () => {
     try {
-      // Upload thumbnail first if there's a new file
-      const thumbnailUrl = await uploadThumbnail()
+      console.log('EditCourse - Saving with thumbnailUrl:', thumbnailUrl)
 
       const payload = {
         title: courseData.title,
@@ -151,9 +161,7 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
   const handlePublish = async () => {
     try {
       await form.validateFields(['confirmOriginal', 'confirmReviewed'])
-
-      // Upload thumbnail first if there's a new file
-      const thumbnailUrl = await uploadThumbnail()
+      console.log('EditCourse - Publishing with thumbnailUrl:', thumbnailUrl)
 
       const payload = {
         title: courseData.title,
@@ -238,13 +246,13 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
 
   const uploadProps = {
     fileList,
-    beforeUpload: (file) => {
-      setFileList([file])
-      return false
-    },
-    onRemove: () => setFileList([]),
+    onChange: handleThumbnailChange,
+    onRemove: handleThumbnailRemove,
+    customRequest: handleThumbnailUpload,
     maxCount: 1,
     listType: 'picture-card',
+    accept: 'image/*',
+    disabled: uploadingThumbnail,
   }
 
   const steps = [
@@ -388,11 +396,18 @@ const EditCourseModal = ({ course, onClose, onSubmit }) => {
                   <Upload {...uploadProps}>
                     {fileList.length < 1 && (
                       <div>
-                        <PlusOutlined />
-                        <div style={{ marginTop: 8 }}>Upload</div>
+                        {uploadingThumbnail ? <LoadingOutlined /> : <PlusOutlined />}
+                        <div style={{ marginTop: 8 }}>
+                          {uploadingThumbnail ? 'Uploading...' : 'Upload'}
+                        </div>
                       </div>
                     )}
                   </Upload>
+                  {thumbnailUrl && (
+                    <div style={{ marginTop: 8, color: '#52c41a', fontSize: 12 }}>
+                      ✓ Current thumbnail: {thumbnailUrl.substring(0, 50)}...
+                    </div>
+                  )}
                 </Form.Item>
               </Card>
             )}

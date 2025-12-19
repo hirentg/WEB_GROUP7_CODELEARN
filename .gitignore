@@ -16,7 +16,9 @@ node_modules/
 /frontend/build/
 frontend/package.json
 *.log
-
+CLOUDINARY_SETUP_GUIDE.md
+IMAGE_UPLOAD_SUMMARY.md
+RBAC_IMPLEMENTATION.md
 # === IDE / hệ điều hành ===
 .vscode/
 .idea/

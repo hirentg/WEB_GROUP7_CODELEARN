@@ -39,48 +39,46 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/error").permitAll() // Allow error page access
-                .requestMatchers("/uploads/**").permitAll() // Allow access to uploaded files
-                // More specific patterns FIRST (before /api/courses/**)
-                .requestMatchers(HttpMethod.GET, "/api/courses/instructor/my-courses").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/courses").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/courses/upload-thumbnail").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/courses/*").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/courses/*").authenticated()
-                // Then allow public GET access to courses
+                .requestMatchers("/error").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
+                
+                // Upload endpoints - authenticated users only
+                .requestMatchers("/api/upload/**").authenticated()
+                
+                // Instructor-only endpoints
+                .requestMatchers("/api/courses/instructor/**").hasAuthority("INSTRUCTOR")
+                .requestMatchers(HttpMethod.POST, "/api/courses").hasAuthority("INSTRUCTOR")
+                .requestMatchers(HttpMethod.POST, "/api/courses/upload-thumbnail").hasAuthority("INSTRUCTOR")
+                .requestMatchers(HttpMethod.PUT, "/api/courses/*").hasAuthority("INSTRUCTOR")
+                .requestMatchers(HttpMethod.DELETE, "/api/courses/*").hasAuthority("INSTRUCTOR")
+                .requestMatchers("/api/instructor/profile/**").hasAuthority("INSTRUCTOR")
+                .requestMatchers("/api/quizzes/instructor/**").hasAuthority("INSTRUCTOR")
+                .requestMatchers(HttpMethod.POST, "/api/quizzes").hasAuthority("INSTRUCTOR")
+                .requestMatchers(HttpMethod.PUT, "/api/quizzes/*").hasAuthority("INSTRUCTOR")
+                .requestMatchers(HttpMethod.DELETE, "/api/quizzes/*").hasAuthority("INSTRUCTOR")
+                .requestMatchers("/api/questions/instructor/**").hasAuthority("INSTRUCTOR")
+                .requestMatchers(HttpMethod.POST, "/api/questions/answers").hasAuthority("INSTRUCTOR")
+                .requestMatchers("/api/videos/upload").hasAuthority("INSTRUCTOR")
+                
+                // Public course browsing
                 .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/videos/*/stream").permitAll()
-                // Quiz endpoints - specific patterns first
-                .requestMatchers(HttpMethod.GET, "/api/quizzes/instructor/my-quizzes").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/quizzes/course/*").authenticated() // Course quizzes for students
-                .requestMatchers(HttpMethod.GET, "/api/quizzes/take/*").authenticated() // Quiz taking for students
+                .requestMatchers(HttpMethod.GET, "/api/ratings/course/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/*/public").permitAll()
+                
+                // Student/authenticated user endpoints
+                .requestMatchers("/api/quizzes/course/*").authenticated()
+                .requestMatchers("/api/quizzes/take/*").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/quizzes/*").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/quizzes").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/quizzes/*").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/quizzes/*").authenticated()
-                // Question endpoints
-                .requestMatchers(HttpMethod.GET, "/api/questions/video/*").authenticated() // Q&A for students
-                .requestMatchers(HttpMethod.GET, "/api/questions/instructor/**").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/questions").authenticated() // Students ask questions
-                .requestMatchers(HttpMethod.POST, "/api/questions/answers").authenticated()
-                // Notification endpoints
+                .requestMatchers(HttpMethod.GET, "/api/questions/video/*").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/questions").authenticated()
                 .requestMatchers("/api/notifications/**").authenticated()
-                // Cart endpoints
                 .requestMatchers("/api/cart/**").authenticated()
-                // Purchase endpoints
-                .requestMatchers("/api/purchases/check/**").permitAll() // Check access can be public
+                .requestMatchers("/api/purchases/check/**").permitAll()
                 .requestMatchers("/api/purchases/**").authenticated()
-                // Rating endpoints
-                .requestMatchers(HttpMethod.GET, "/api/ratings/course/**").permitAll() // Public course reviews
                 .requestMatchers("/api/ratings/**").authenticated()
-                // User profile endpoints
-                .requestMatchers(HttpMethod.GET, "/api/users/*/public").permitAll() // Public profiles
                 .requestMatchers("/api/users/**").authenticated()
-                // Other authenticated endpoints
-                .requestMatchers("/api/videos/upload").authenticated()
-                // Instructor profile - public endpoints first
-                .requestMatchers(HttpMethod.GET, "/api/instructor/profile/*/public").permitAll()
-                .requestMatchers("/api/instructor/profile/**").authenticated()
+                
                 .anyRequest().authenticated());
 
         // Return 401 for unauthenticated API requests instead of redirecting to a login
