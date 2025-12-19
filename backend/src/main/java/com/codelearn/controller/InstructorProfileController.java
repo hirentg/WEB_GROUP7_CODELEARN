@@ -10,6 +10,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping(path = "/api/instructor/profile", produces = MediaType.APPLICATION_JSON_VALUE)
 public class InstructorProfileController {
@@ -68,6 +71,101 @@ public class InstructorProfileController {
         } catch (RuntimeException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Object>> getStats(
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            Long userId = jwtUtil.getUserIdFromToken(authHeader);
+            
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            InstructorProfileResponse profile = instructorProfileService.getInstructorProfile(userId);
+            Map<String, Object> stats = instructorProfileService.getInstructorStats(profile.getId());
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @GetMapping("/enrollment-trend")
+    public ResponseEntity<List<Map<String, Object>>> getEnrollmentTrend(
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            Long userId = jwtUtil.getUserIdFromToken(authHeader);
+            
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            InstructorProfileResponse profile = instructorProfileService.getInstructorProfile(userId);
+            List<Map<String, Object>> trend = instructorProfileService.getEnrollmentTrend(profile.getId());
+            return ResponseEntity.ok(trend);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @GetMapping("/course-performance")
+    public ResponseEntity<List<Map<String, Object>>> getCoursePerformance(
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            Long userId = jwtUtil.getUserIdFromToken(authHeader);
+            
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            InstructorProfileResponse profile = instructorProfileService.getInstructorProfile(userId);
+            List<Map<String, Object>> performance = instructorProfileService.getCoursePerformance(profile.getId());
+            return ResponseEntity.ok(performance);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @GetMapping("/student-progress-distribution")
+    public ResponseEntity<List<Map<String, Object>>> getStudentProgressDistribution(
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            Long userId = jwtUtil.getUserIdFromToken(authHeader);
+            
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            InstructorProfileResponse profile = instructorProfileService.getInstructorProfile(userId);
+            List<Map<String, Object>> distribution = instructorProfileService.getStudentProgressDistribution(profile.getId());
+            return ResponseEntity.ok(distribution);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @GetMapping("/detailed-course-stats")
+    public ResponseEntity<List<Map<String, Object>>> getDetailedCourseStats(
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            Long userId = jwtUtil.getUserIdFromToken(authHeader);
+            
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            InstructorProfileResponse profile = instructorProfileService.getInstructorProfile(userId);
+            List<Map<String, Object>> stats = instructorProfileService.getDetailedCourseStats(profile.getId());
+            return ResponseEntity.ok(stats);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

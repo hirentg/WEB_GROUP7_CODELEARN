@@ -38,4 +38,10 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
            "(SELECT v.id FROM Video v WHERE v.course.id = :courseId) " +
            "ORDER BY q.createdAt DESC")
     List<Question> findQuestionsByCourseId(@Param("courseId") String courseId);
+    
+    // Count pending questions for instructor
+    @Query("SELECT COUNT(q) FROM Question q WHERE q.videoId IN " +
+           "(SELECT v.id FROM Video v WHERE v.course.instructorId = :instructorId) " +
+           "AND q.isAnswered = false")
+    Long countPendingQuestionsByInstructorId(@Param("instructorId") Long instructorId);
 }
