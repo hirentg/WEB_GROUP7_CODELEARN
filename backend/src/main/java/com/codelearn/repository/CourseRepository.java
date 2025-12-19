@@ -62,4 +62,12 @@ public interface CourseRepository extends JpaRepository<Course, String> {
             ORDER BY studentCount DESC
             """, nativeQuery = true)
     List<Object[]> getDetailedCourseStatsByInstructorId(@Param("instructorId") Long instructorId);
+
+    // Search courses by title (case-insensitive, partial match)
+    @Query("SELECT c FROM Course c WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :query, '%')) AND c.status = 'PUBLISHED'")
+    List<Course> searchByTitle(@Param("query") String query);
+
+    // Search by title or description
+    @Query("SELECT c FROM Course c WHERE (LOWER(c.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.description) LIKE LOWER(CONCAT('%', :query, '%'))) AND c.status = 'PUBLISHED'")
+    List<Course> searchByTitleOrDescription(@Param("query") String query);
 }

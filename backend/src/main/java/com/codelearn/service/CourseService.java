@@ -22,8 +22,10 @@ import java.util.stream.Collectors;
 public class CourseService {
 
     private static final String DEFAULT_THUMBNAIL = "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&q=80";
-    private static final String DEFAULT_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Default video placeholder
-    private static final String DEFAULT_PROMO_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Default promo video
+    private static final String DEFAULT_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Default video
+                                                                                                   // placeholder
+    private static final String DEFAULT_PROMO_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Default
+                                                                                                         // promo video
 
     @Autowired
     private CourseRepository courseRepository;
@@ -138,6 +140,16 @@ public class CourseService {
         return videoRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
     }
 
+    // Search courses by title or description
+    public List<Course> searchCourses(String query) {
+        return courseRepository.searchByTitleOrDescription(query);
+    }
+
+    // Get course sections with videos for public preview
+    public List<Section> getCourseSections(String courseId) {
+        return sectionRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
+    }
+
     @Transactional
     public Course createCourse(CreateCourseRequest request, Long instructorId, String instructorName) {
         // Generate unique course ID
@@ -148,7 +160,7 @@ public class CourseService {
         if (thumbnailUrl == null || thumbnailUrl.trim().isEmpty()) {
             thumbnailUrl = DEFAULT_THUMBNAIL;
         }
-        
+
         // Use default promo video URL if not provided
         String promoVideoUrl = request.getPromoVideoUrl();
         if (promoVideoUrl == null || promoVideoUrl.trim().isEmpty()) {
@@ -209,7 +221,7 @@ public class CourseService {
         if (request.getCategoryId() != null) {
             course.setCategoryId(request.getCategoryId());
         }
-        
+
         // Set promo video URL
         course.setPromoVideoUrl(promoVideoUrl);
 
@@ -430,7 +442,7 @@ public class CourseService {
         if (request.getThumbnailUrl() != null && !request.getThumbnailUrl().trim().isEmpty()) {
             course.setThumbnailUrl(request.getThumbnailUrl());
         }
-        
+
         // Update promo video URL if provided
         if (request.getPromoVideoUrl() != null && !request.getPromoVideoUrl().trim().isEmpty()) {
             course.setPromoVideoUrl(request.getPromoVideoUrl());

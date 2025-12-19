@@ -10,12 +10,17 @@ import java.util.List;
 
 @Repository
 public interface QuizRepository extends JpaRepository<Quiz, Long> {
-    
-    List<Quiz> findByVideoId(Long videoId);
-    
-    @Query("SELECT q FROM Quiz q " +
-           "JOIN Video v ON q.videoId = v.id " +
-           "JOIN Course c ON v.courseId = c.id " +
-           "WHERE c.instructorId = :instructorId")
-    List<Quiz> findByInstructorId(@Param("instructorId") Long instructorId);
+
+        List<Quiz> findByVideoId(Long videoId);
+
+        @Query("SELECT q FROM Quiz q " +
+                        "JOIN Video v ON q.videoId = v.id " +
+                        "JOIN Course c ON v.courseId = c.id " +
+                        "WHERE c.instructorId = :instructorId")
+        List<Quiz> findByInstructorId(@Param("instructorId") Long instructorId);
+
+        @Query("SELECT q FROM Quiz q " +
+                        "JOIN Video v ON q.videoId = v.id " +
+                        "WHERE v.courseId = :courseId AND (q.status = 'PUBLISHED' OR q.status = 'ACTIVE')")
+        List<Quiz> findByCourseIdAndPublished(@Param("courseId") String courseId);
 }
