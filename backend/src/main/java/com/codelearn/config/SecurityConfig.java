@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
+import static org.springframework.security.config.Customizer.withDefaults;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -34,7 +35,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         // ✅ CORS: BẮT BUỘC gắn source vào Spring Security
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource));
+        http.cors(withDefaults());
 
         // Disable CSRF for API usage and use stateless session management
         http.csrf(csrf -> csrf.disable());
