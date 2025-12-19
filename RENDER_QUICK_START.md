@@ -7,7 +7,9 @@
 The following files have been updated:
 - ✅ `backend/src/main/resources/application.properties` - Uses environment variables
 - ✅ `backend/src/main/java/com/codelearn/config/CorsConfig.java` - Supports Render URLs
-- ✅ `render.yaml` - Blueprint configuration (optional)
+- ✅ `backend/Dockerfile` - Docker configuration for Java 17
+- ✅ `backend/.dockerignore` - Docker ignore file
+- ✅ `render.yaml` - Blueprint configuration using Docker
 
 ### 2. Push to GitHub
 
@@ -44,9 +46,10 @@ git push origin main
 3. Settings:
    - **Name:** `codelearn-backend`
    - **Root Directory:** `backend`
-   - **Environment:** `Java`
-   - **Build Command:** `mvn clean package -DskipTests`
-   - **Start Command:** `java -jar target/codelearn-backend-0.0.1-SNAPSHOT.jar`
+   - **Environment:** `Docker` ⚠️ **Important: Select Docker, not Java**
+   - **Dockerfile Path:** `Dockerfile` (or leave default)
+   - **Docker Context:** `.` (or leave default)
+   - **Note:** Dockerfile is already created in `backend/` directory
 4. Add Environment Variables:
    ```
    DATABASE_URL = (paste from PostgreSQL service)
@@ -91,29 +94,42 @@ After backend is deployed:
 
 ## ⚠️ Important Notes
 
-1. **Database URL Format:**
+1. **Docker Deployment:**
+   - ✅ Using Docker instead of native Java (more reliable)
+   - ✅ `backend/Dockerfile` contains Java 17 configuration
+   - ✅ Works on all Render plans
+   - See `RENDER_DOCKER_DEPLOYMENT.md` for details
+
+2. **If Render Doesn't Support Java:**
+   - ✅ Docker solution is already set up
+   - See `ALTERNATIVE_PLATFORMS.md` for other options (Railway, Heroku, etc.)
+
+2. **Database URL Format:**
    - Render provides: `postgresql://user:pass@host:port/db`
    - Spring Boot needs: `jdbc:postgresql://host:port/db?user=user&password=pass`
-   - You may need to parse the URL or set individual variables
+   - Use individual variables (`DATABASE_HOST`, etc.) instead
 
-2. **First Deployment:**
+3. **First Deployment:**
    - Takes 5-10 minutes
    - Database tables created automatically (if `SPRING_JPA_DDL_AUTO=update`)
 
-3. **Free Tier:**
+4. **Free Tier:**
    - Services spin down after 15 min inactivity
    - First request after spin-down takes ~30 seconds
 
-4. **CORS:**
+5. **CORS:**
    - Make sure `FRONTEND_URL` matches your actual frontend URL
    - Update `CorsConfig.java` if needed
 
 ## 🔧 Troubleshooting
 
 **Backend won't start:**
-- Check build logs
-- Verify `DATABASE_URL` is correct
-- Check Java version (should be 17)
+- Check build logs (Docker build may take 10-15 minutes)
+- Verify `DATABASE_URL` or individual DB variables are set
+- Check Dockerfile is in `backend/` directory
+- Verify Docker Context is set correctly
+- See `RENDER_DOCKER_DEPLOYMENT.md` for Docker troubleshooting
+- Consider alternative platforms (see `ALTERNATIVE_PLATFORMS.md`)
 
 **Frontend can't connect:**
 - Verify `VITE_API_URL` is set

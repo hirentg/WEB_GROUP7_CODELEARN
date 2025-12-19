@@ -138,7 +138,9 @@ VITE_API_URL=https://your-backend-app.onrender.com/api
 4. Click **Create Database**
 5. **Important:** Copy the **Internal Database URL** (we'll use this later)
 
-### Step 2: Deploy Backend
+### Step 2: Deploy Backend (Using Docker)
+
+**Note:** Render may not support Java directly. We'll use Docker instead (recommended).
 
 1. In Render dashboard, click **New +** → **Web Service**
 2. Connect your GitHub repository
@@ -146,13 +148,19 @@ VITE_API_URL=https://your-backend-app.onrender.com/api
    - **Name:** `codelearn-backend` (or your preferred name)
    - **Region:** Same as database
    - **Branch:** `main` (or your default branch)
+   - **Environment:** `Docker` ⚠️ **Important: Select Docker, not Java**
    - **Root Directory:** `backend`
-   - **Runtime:** `Java`
-   - **Build Command:** `mvn clean package -DskipTests`
-   - **Start Command:** `java -jar target/codelearn-backend-0.0.1-SNAPSHOT.jar`
+   - **Dockerfile Path:** `Dockerfile` (or leave default)
+   - **Docker Context:** `.` (current directory, or leave default)
 4. Click **Advanced** and add Environment Variables (see section below)
 5. Click **Create Web Service**
-6. Wait for deployment (first build takes 5-10 minutes)
+6. Wait for deployment (first build takes 10-15 minutes with Docker)
+
+**Alternative:** If you see Java option available:
+   - **Runtime:** `Java` or `Java 17`
+   - **Build Command:** `mvn clean package -DskipTests`
+   - **Start Command:** `java -jar target/codelearn-backend-0.0.1-SNAPSHOT.jar`
+   - Make sure `backend/system.properties` exists with `java.runtime.version=17`
 
 ### Step 3: Deploy Frontend
 
@@ -233,61 +241,24 @@ You'll need to convert it to JDBC format manually or use a script. For simplicit
 
 ---
 
-## Create render.yaml (Optional but Recommended)
+## Create render.yaml (Recommended - Uses Docker)
 
-Create `render.yaml` in your project root for easier deployment:
+The `render.yaml` file is already created and uses Docker for the backend:
 
-**File:** `render.yaml`
+**File:** `render.yaml` (already created ✅)
 
-```yaml
-services:
-  # PostgreSQL Database
-  - type: pspg
-    name: codelearn-db
-    databaseName: codelearn
-    user: codelearn_user
-    plan: free
-
-  # Backend Service
-  - type: web
-    name: codelearn-backend
-    env: java
-    region: oregon
-    plan: free
-    buildCommand: cd backend && mvn clean package -DskipTests
-    startCommand: cd backend && java -jar target/codelearn-backend-0.0.1-SNAPSHOT.jar
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: codelearn-db
-          property: connectionString
-      - key: SPRING_JPA_DDL_AUTO
-        value: update
-      - key: SPRING_JPA_SHOW_SQL
-        value: "false"
-      - key: LOG_LEVEL
-        value: INFO
-      - key: FRONTEND_URL
-        value: https://codelearn-frontend.onrender.com
-
-  # Frontend Static Site
-  - type: web
-    name: codelearn-frontend
-    env: static
-    region: oregon
-    plan: free
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://codelearn-backend.onrender.com/api
-```
+- Uses `env: docker` for backend (works on all Render plans)
+- Automatically configures database connection
+- Sets up frontend static site
 
 **To use render.yaml:**
-1. Push `render.yaml` to your GitHub repo
+1. Push `render.yaml` and `backend/Dockerfile` to your GitHub repo
 2. In Render dashboard, click **New +** → **Blueprint**
 3. Connect your repository
-4. Render will automatically create all services
+4. Render will automatically detect and create all services
+5. Wait for deployment (~10-15 minutes)
+
+**See `RENDER_DOCKER_DEPLOYMENT.md` for detailed Docker deployment guide.**
 
 ---
 

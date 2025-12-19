@@ -7,15 +7,14 @@ services:
     plan: free
     region: oregon
 
-  # Backend Web Service
+  # Backend Web Service (using Docker)
   - type: web
     name: codelearn-backend
-    env: java
+    env: docker
     region: oregon
     plan: free
-    buildCommand: mvn clean package -DskipTests
-    startCommand: java -jar target/codelearn-backend-0.0.1-SNAPSHOT.jar
-    rootDir: backend
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     envVars:
       - key: SPRING_JPA_DDL_AUTO
         value: update
