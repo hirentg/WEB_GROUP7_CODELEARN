@@ -18,7 +18,6 @@ async function request(method, path, body) {
   const options = {
     method,
     headers,
-    credentials: 'include'
   }
 
   // Only stringify non-FormData bodies
