@@ -1,0 +1,63 @@
+services:
+  # PostgreSQL Database
+  - type: pspg
+    name: codelearn-db
+    databaseName: codelearn
+    user: codelearn_user
+    plan: free
+    region: oregon
+
+  # Backend Web Service
+  - type: web
+    name: codelearn-backend
+    env: java
+    region: oregon
+    plan: free
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -jar target/codelearn-backend-0.0.1-SNAPSHOT.jar
+    rootDir: backend
+    envVars:
+      - key: SPRING_JPA_DDL_AUTO
+        value: update
+      - key: SPRING_JPA_SHOW_SQL
+        value: "false"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: codelearn-db
+          property: host
+      - key: DATABASE_PORT
+        fromDatabase:
+          name: codelearn-db
+          property: port
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: codelearn-db
+          property: database
+      - key: DATABASE_USERNAME
+        fromDatabase:
+          name: codelearn-db
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: codelearn-db
+          property: password
+      - key: FRONTEND_URL
+        value: https://codelearn-frontend.onrender.com
+
+  # Frontend Static Site
+  - type: web
+    name: codelearn-frontend
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    rootDir: frontend
+    envVars:
+      - key: VITE_API_URL
+        value: https://codelearn-backend.onrender.com/api
+
