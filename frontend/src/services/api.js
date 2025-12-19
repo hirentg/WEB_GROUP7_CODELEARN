@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://codelearn-backend.onrender.com/api'
 
 async function request(method, path, body) {
   const token = localStorage.getItem('cl_token')
