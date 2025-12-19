@@ -201,12 +201,21 @@ export default function Navbar() {
       icon: <UserOutlined />,
       onClick: () => navigate('/profile')
     },
-    {
-      key: 'learning',
-      label: 'My Learning',
-      icon: <BookOutlined />,
-      onClick: () => navigate('/my-learning')
-    },
+    // Show My Learning for students, Dashboard for instructors
+    ...(user?.role === 'INSTRUCTOR'
+      ? [{
+        key: 'dashboard',
+        label: 'Dashboard',
+        icon: <BookOutlined />,
+        onClick: () => navigate('/instructor')
+      }]
+      : [{
+        key: 'learning',
+        label: 'My Learning',
+        icon: <BookOutlined />,
+        onClick: () => navigate('/my-learning')
+      }]
+    ),
     {
       key: 'logout',
       label: 'Logout',
@@ -259,31 +268,45 @@ export default function Navbar() {
         <Space size="large">
           {user ? (
             <>
-              <Link to="/my-learning" style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: 500, textDecoration: 'none' }}>
-                My Learning
-              </Link>
+              {/* Show My Learning only for non-instructors (students) */}
+              {user.role !== 'INSTRUCTOR' && (
+                <Link to="/my-learning" style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: 500, textDecoration: 'none' }}>
+                  My Learning
+                </Link>
+              )}
 
-              {/* Cart Icon */}
-              <Badge count={cartCount} offset={[-4, 4]}>
-                <ShoppingCartOutlined
-                  style={{ fontSize: '20px', color: 'var(--text-secondary)', cursor: 'pointer' }}
-                  onClick={() => navigate('/cart')}
-                />
-              </Badge>
+              {/* Show Instructor Dashboard link for instructors */}
+              {user.role === 'INSTRUCTOR' && (
+                <Link to="/instructor" style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: 500, textDecoration: 'none' }}>
+                  Dashboard
+                </Link>
+              )}
 
-              {/* Notification Bell */}
-              <Popover
-                content={notificationContent}
-                trigger="click"
-                open={notificationOpen}
-                onOpenChange={handleNotificationOpen}
-                placement="bottomRight"
-                arrow={false}
-              >
-                <Badge count={unreadCount} offset={[-4, 4]} size="small">
-                  <BellOutlined style={{ fontSize: '20px', color: 'var(--text-secondary)', cursor: 'pointer' }} />
+              {/* Cart Icon - only for students */}
+              {user.role !== 'INSTRUCTOR' && (
+                <Badge count={cartCount} offset={[-4, 4]}>
+                  <ShoppingCartOutlined
+                    style={{ fontSize: '20px', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                    onClick={() => navigate('/cart')}
+                  />
                 </Badge>
-              </Popover>
+              )}
+
+              {/* Notification Bell - only for students */}
+              {user.role !== 'INSTRUCTOR' && (
+                <Popover
+                  content={notificationContent}
+                  trigger="click"
+                  open={notificationOpen}
+                  onOpenChange={handleNotificationOpen}
+                  placement="bottomRight"
+                  arrow={false}
+                >
+                  <Badge count={unreadCount} offset={[-4, 4]} size="small">
+                    <BellOutlined style={{ fontSize: '20px', color: 'var(--text-secondary)', cursor: 'pointer' }} />
+                  </Badge>
+                </Popover>
+              )}
 
               <Dropdown menu={{ items: userMenu }} placement="bottomRight">
                 <Avatar

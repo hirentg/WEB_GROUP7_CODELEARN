@@ -8,18 +8,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class CodeLearnApplication implements CommandLineRunner {
-    
+
     @Autowired
     private CourseService courseService;
-    
+
     public static void main(String[] args) {
         SpringApplication.run(CodeLearnApplication.class, args);
     }
-    
+
     @Override
     public void run(String... args) throws Exception {
-        courseService.initializeSampleCourses();
+        // Disabled: Sample courses are no longer needed
+        // courseService.initializeSampleCourses();
     }
 }
-
-

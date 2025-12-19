@@ -14,7 +14,9 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons'
+import { useAuth } from '../../context/AuthContext'
 
 const items = [
   { key: 'overview', icon: <DashboardOutlined />, label: 'Overview' },
@@ -114,21 +116,21 @@ const NotificationContent = ({ onClose }) => {
   const [notifications, setNotifications] = useState(initialNotifications)
   const [hasMore, setHasMore] = useState(true)
   const [loadedMore, setLoadedMore] = useState(false)
-  
+
   const handleRemoveNotification = (id) => {
     setNotifications(notifications.filter(n => n.id !== id))
   }
-  
+
   const handleMarkAsRead = (id) => {
-    setNotifications(notifications.map(n => 
+    setNotifications(notifications.map(n =>
       n.id === id ? { ...n, unread: false } : n
     ))
   }
-  
+
   const handleMarkAllAsRead = () => {
     setNotifications(notifications.map(n => ({ ...n, unread: false })))
   }
-  
+
   const handleLoadMore = () => {
     if (!loadedMore) {
       setNotifications([...notifications, ...additionalNotifications])
@@ -136,13 +138,13 @@ const NotificationContent = ({ onClose }) => {
       setHasMore(false) // No more notifications after this
     }
   }
-  
+
   const unreadCount = notifications.filter(n => n.unread).length
 
   return (
     <div style={{ width: 420, maxHeight: 600, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ 
-        padding: '16px 20px', 
+      <div style={{
+        padding: '16px 20px',
         borderBottom: '1px solid #e5e7eb',
         display: 'flex',
         justifyContent: 'space-between',
@@ -156,16 +158,16 @@ const NotificationContent = ({ onClose }) => {
           <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#1f2937' }}>Notifications</h3>
           <p style={{ margin: 0, fontSize: 13, color: '#9ca3af' }}>{unreadCount} unread</p>
         </div>
-        <Button 
-          type="link" 
-          size="small" 
+        <Button
+          type="link"
+          size="small"
           onClick={handleMarkAllAsRead}
           style={{ padding: 0, fontSize: 13, color: '#6366f1', fontWeight: 500 }}
         >
           Mark all read
         </Button>
       </div>
-      
+
       <div style={{ flex: 1, overflow: 'auto', background: '#f9fafb' }}>
         {notifications.map((notification, index) => (
           <div key={notification.id}>
@@ -198,7 +200,7 @@ const NotificationContent = ({ onClose }) => {
                   color: '#9ca3af'
                 }}
               />
-              
+
               <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
                 <div style={{
                   width: 40,
@@ -217,24 +219,24 @@ const NotificationContent = ({ onClose }) => {
                   })}
                 </div>
                 <div style={{ flex: 1, minWidth: 0, paddingRight: 20 }}>
-                  <div style={{ 
-                    fontWeight: notification.unread ? 600 : 500, 
+                  <div style={{
+                    fontWeight: notification.unread ? 600 : 500,
                     fontSize: 14,
                     color: notification.unread ? '#1f2937' : '#6b7280',
                     marginBottom: 4
                   }}>
                     {notification.title}
                   </div>
-                  <p style={{ 
-                    margin: '0 0 4px 0', 
-                    fontSize: 13, 
+                  <p style={{
+                    margin: '0 0 4px 0',
+                    fontSize: 13,
                     color: notification.unread ? '#6b7280' : '#9ca3af',
                     lineHeight: 1.5
                   }}>
                     {notification.message}
                   </p>
-                  <div style={{ 
-                    display: 'flex', 
+                  <div style={{
+                    display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     marginTop: 8
@@ -248,7 +250,7 @@ const NotificationContent = ({ onClose }) => {
                   </div>
                 </div>
               </div>
-              
+
               {notification.unread && (
                 <div style={{ paddingLeft: 52 }}>
                   <Button
@@ -271,16 +273,16 @@ const NotificationContent = ({ onClose }) => {
           </div>
         ))}
       </div>
-      
+
       {hasMore && (
-        <div style={{ 
-          padding: '12px 20px', 
+        <div style={{
+          padding: '12px 20px',
           borderTop: '1px solid #e5e7eb',
           textAlign: 'center',
           background: '#fff'
         }}>
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             onClick={handleLoadMore}
             style={{ fontSize: 14, color: '#6366f1', fontWeight: 500 }}
           >
@@ -294,16 +296,24 @@ const NotificationContent = ({ onClose }) => {
 
 const SidebarInstructor = ({ selected = 'overview' }) => {
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
   const [notificationOpen, setNotificationOpen] = useState(false)
 
   const handleMenuClick = (e) => {
     navigate(`/instructor/${e.key}`)
   }
 
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '0 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 8px 24px' }}>
-        <Avatar size={48} style={{ background: '#6366f1' }}>P</Avatar>
+        <Avatar size={48} style={{ background: '#6366f1' }}>
+          {user?.name?.[0]?.toUpperCase() || 'P'}
+        </Avatar>
         <div>
           <div style={{ fontWeight: 700 }}>Code Learn</div>
           <div style={{ fontSize: 12, color: '#6b7280' }}>Instructor Dashboard</div>
@@ -317,9 +327,9 @@ const SidebarInstructor = ({ selected = 'overview' }) => {
         items={items}
         style={{ borderRight: 'none', flex: 1 }}
       />
-      
+
       {/* Notifications at bottom */}
-      <div style={{ 
+      <div style={{
         padding: '16px 8px',
         borderTop: '1px solid #f3f4f6',
         marginTop: 'auto'
@@ -333,25 +343,25 @@ const SidebarInstructor = ({ selected = 'overview' }) => {
           overlayStyle={{ padding: 0 }}
           overlayInnerStyle={{ padding: 0, borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.15)' }}
         >
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
             gap: 12,
             cursor: 'pointer',
             padding: '8px 12px',
             borderRadius: 8,
             transition: 'background 0.2s'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <BellOutlined style={{ fontSize: 20, color: '#374151' }} />
             <span style={{ fontSize: 15, fontWeight: 500, color: '#374151' }}>
               Notifications
             </span>
-            <Badge 
-              count={340} 
-              style={{ 
+            <Badge
+              count={340}
+              style={{
                 marginLeft: 'auto',
                 background: '#ef4444',
                 fontSize: 11,
@@ -359,13 +369,36 @@ const SidebarInstructor = ({ selected = 'overview' }) => {
                 lineHeight: '20px',
                 minWidth: 20,
                 padding: '0 6px'
-              }} 
+              }}
             />
           </div>
         </Popover>
+
+        {/* Logout Button */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            cursor: 'pointer',
+            padding: '8px 12px',
+            borderRadius: 8,
+            marginTop: 8,
+            transition: 'background 0.2s'
+          }}
+          onClick={handleLogout}
+          onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        >
+          <LogoutOutlined style={{ fontSize: 20, color: '#ef4444' }} />
+          <span style={{ fontSize: 15, fontWeight: 500, color: '#ef4444' }}>
+            Logout
+          </span>
+        </div>
       </div>
     </div>
   )
 }
 
 export default SidebarInstructor
+

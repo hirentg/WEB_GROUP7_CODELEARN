@@ -1,12 +1,22 @@
 package com.codelearn.dto;
 
 public class CreateVideoRequest {
+    private Long id; // null for new videos, set for existing videos
     private String title;
     private String videoUrl;
     private Integer duration; // Duration in seconds
     private Integer orderIndex;
-    
-    public CreateVideoRequest() {}
+
+    public CreateVideoRequest() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getTitle() {
         return title;
