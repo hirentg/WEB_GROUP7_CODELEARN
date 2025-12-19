@@ -15,6 +15,14 @@ export default function HomePage() {
   const [purchasedCourses, setPurchasedCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [heroSearchQuery, setHeroSearchQuery] = useState('')
+
+  const handleHeroSearch = (query) => {
+    const searchTerm = query || heroSearchQuery
+    if (searchTerm?.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`)
+    }
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -98,6 +106,9 @@ export default function HomePage() {
                   size="large"
                   placeholder="What do you want to learn?"
                   prefix={<SearchOutlined style={{ color: 'var(--text-muted)', fontSize: '20px' }} />}
+                  value={heroSearchQuery}
+                  onChange={(e) => setHeroSearchQuery(e.target.value)}
+                  onPressEnter={() => handleHeroSearch()}
                   style={{
                     height: '64px',
                     fontSize: '18px',
@@ -107,14 +118,20 @@ export default function HomePage() {
                     border: '1px solid transparent'
                   }}
                 />
-                <Button type="primary" size="large" shape="round" style={{
-                  position: 'absolute',
-                  right: '8px',
-                  top: '8px',
-                  height: '48px',
-                  padding: '0 32px',
-                  fontSize: '16px'
-                }}>
+                <Button
+                  type="primary"
+                  size="large"
+                  shape="round"
+                  onClick={() => handleHeroSearch()}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '8px',
+                    height: '48px',
+                    padding: '0 32px',
+                    fontSize: '16px'
+                  }}
+                >
                   Search
                 </Button>
               </div>
@@ -122,13 +139,19 @@ export default function HomePage() {
               <Space size="middle" wrap style={{ justifyContent: 'center' }}>
                 <Text type="secondary">Popular:</Text>
                 {['Web Development', 'Java', 'React', 'Spring Boot'].map(tag => (
-                  <Tag key={tag} style={{
-                    padding: '6px 16px',
-                    fontSize: '14px',
-                    background: 'rgba(255,255,255,0.6)',
-                    border: '1px solid var(--border-color)',
-                    cursor: 'pointer'
-                  }}>
+                  <Tag
+                    key={tag}
+                    onClick={() => handleHeroSearch(tag)}
+                    style={{
+                      padding: '6px 16px',
+                      fontSize: '14px',
+                      background: 'rgba(255,255,255,0.6)',
+                      border: '1px solid var(--border-color)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    className="hover-tag"
+                  >
                     {tag}
                   </Tag>
                 ))}
