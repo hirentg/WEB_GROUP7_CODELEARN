@@ -17,7 +17,7 @@ public class CorsConfig {
         
         // Chỉ định rõ các origin cho phép, tránh dùng "*"
         config.setAllowedOrigins(List.of(
-            "https://web-group7-codlearn.onrender.com",  // frontend Render
+            "https://web-group7-codelearn.onrender.com",  // frontend Render
             "http://localhost:5173",  // Nếu bạn đang phát triển ở localhost
             "http://127.0.0.1:5173",
             "http://localhost:5174",
