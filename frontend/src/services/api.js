@@ -1,5 +1,5 @@
 const getBaseUrl = () => {
-  let url = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+  let url = import.meta.env.VITE_API_URL || 'https://codelearn-backend-pban.onrender.com/api';
   if (url.endsWith('/')) {
     url = url.slice(0, -1);
   }
