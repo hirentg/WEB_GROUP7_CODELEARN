@@ -1,4 +1,15 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+const getBaseUrl = () => {
+  let url = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+  if (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+  if (!url.endsWith('/api')) {
+    url += '/api';
+  }
+  return url;
+}
+
+const BASE_URL = getBaseUrl();
 
 async function request(method, path, body) {
   const token = localStorage.getItem('cl_token')

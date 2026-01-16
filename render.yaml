@@ -1,0 +1,35 @@
+services:
+  # Backend Service (Docker)
+  - type: web
+    name: codelearn-backend
+    runtime: docker
+    rootDir: backend
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: PORT
+        value: 8080
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:postgresql://dpg-d5f3kt63jp1c73bkmsj0-a:5432/codelearn_yeqp
+      - key: SPRING_DATASOURCE_USERNAME
+        value: codelearn
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: rJnZWv2AoCEZHZ8vEgYfg10EgUPCFikl
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+    plan: free
+
+  # Frontend Service (Node)
+  - type: web
+    name: codelearn-frontend
+    runtime: node
+    rootDir: frontend
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: codelearn-backend
+          property: url
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview -- --host 0.0.0.0 --port $PORT
+    plan: free
