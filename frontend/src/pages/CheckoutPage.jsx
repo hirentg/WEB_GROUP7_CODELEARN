@@ -80,23 +80,20 @@ export default function CheckoutPage() {
         setProcessing(true)
 
         try {
-            // Create PayPal order on backend (stores pending order in DB)
-            const createResponse = await api.post('/paypal/create-order', {
+            const response = await api.post('/purchases/checkout', {
                 courseId,
-                baseUrl: window.location.origin
+                paymentMethod: 'PAYPAL'
             })
 
-            if (createResponse?.success && createResponse?.approvalUrl) {
-                // Redirect to PayPal for approval
-                // PayPal will return with 'token' query param (order ID)
-                // Backend validates ownership, no localStorage needed
-                window.location.href = createResponse.approvalUrl
+            if (response?.success) {
+                message.success('PayPal payment successful! Redirecting to your course...')
+                setTimeout(() => navigate(`/course/${courseId}/learn`), 1500)
             } else {
-                message.error(createResponse?.message || 'Failed to create PayPal order')
-                setProcessing(false)
+                message.error(response?.message || 'PayPal payment failed')
             }
         } catch (error) {
             message.error(error.message || 'PayPal payment failed')
+        } finally {
             setProcessing(false)
         }
     }

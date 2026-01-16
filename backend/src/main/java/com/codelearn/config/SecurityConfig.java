@@ -41,10 +41,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
-
+                
                 // Upload endpoints - authenticated users only
                 .requestMatchers("/api/upload/**").authenticated()
-
+                
                 // Instructor-only endpoints
                 .requestMatchers("/api/courses/instructor/**").hasAuthority("INSTRUCTOR")
                 .requestMatchers(HttpMethod.POST, "/api/courses").hasAuthority("INSTRUCTOR")
@@ -59,13 +59,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/questions/instructor/**").hasAuthority("INSTRUCTOR")
                 .requestMatchers(HttpMethod.POST, "/api/questions/answers").hasAuthority("INSTRUCTOR")
                 .requestMatchers("/api/videos/upload").hasAuthority("INSTRUCTOR")
-
+                
                 // Public course browsing
                 .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/videos/*/stream").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/ratings/course/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/*/public").permitAll()
-
+                
                 // Student/authenticated user endpoints
                 .requestMatchers("/api/quizzes/course/*").authenticated()
                 .requestMatchers("/api/quizzes/take/*").authenticated()
@@ -76,10 +76,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/cart/**").authenticated()
                 .requestMatchers("/api/purchases/check/**").permitAll()
                 .requestMatchers("/api/purchases/**").authenticated()
-                .requestMatchers("/api/paypal/**").authenticated()
                 .requestMatchers("/api/ratings/**").authenticated()
                 .requestMatchers("/api/users/**").authenticated()
-
+                
                 .anyRequest().authenticated());
 
         // Return 401 for unauthenticated API requests instead of redirecting to a login

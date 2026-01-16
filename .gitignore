@@ -7,7 +7,6 @@
 *.log
 AUTH_FLOW_DOCUMENTATION.md
 database.sql
-STUDENT_PAGES_DOCUMENTATION.txt
 # === Node / React ===
 node_modules/
 /frontend/node_modules/
