@@ -4,6 +4,8 @@ import HomePage from './pages/HomePage'
 import CourseDetailsPage from './pages/CourseDetailsPage'
 import CourseLearnPage from './pages/CourseLearnPage'
 import CheckoutPage from './pages/CheckoutPage'
+import PayPalSuccessPage from './pages/PayPalSuccessPage'
+import PayPalCancelPage from './pages/PayPalCancelPage'
 import QuizTakePage from './pages/QuizTakePage'
 import MyCoursesPage from './pages/MyCoursesPage'
 import CartPage from './pages/CartPage'
@@ -85,6 +87,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CheckoutPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/checkout/:courseId/paypal-success"
+            element={
+              <ProtectedRoute>
+                <PayPalSuccessPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/checkout/:courseId/paypal-cancel"
+            element={
+              <ProtectedRoute>
+                <PayPalCancelPage />
               </ProtectedRoute>
             }
           />
