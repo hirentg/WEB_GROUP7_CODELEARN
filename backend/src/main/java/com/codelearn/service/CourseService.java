@@ -49,7 +49,7 @@ public class CourseService {
      * Only returns PUBLISHED courses
      */
     public List<Course> getAllCourses() {
-        List<Course> courses = courseRepository.findByStatusIgnoreCase("PUBLISHED");
+        List<Course> courses = courseRepository.findByStatus("PUBLISHED");
         // Tính completion cho từng khóa học
         courses.forEach(course -> {
             Double completion = courseRepository.calculateCourseCompletion(course.getId());
